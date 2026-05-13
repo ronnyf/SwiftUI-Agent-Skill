@@ -13,6 +13,7 @@
 - `#Preview` should be used for previews, not the legacy `PreviewProvider` protocol.
 - When using `TabView(selection:)`, use a binding to a property that stores an enum rather than an integer or string. For example, `Tab("Home", systemImage: "house", value: .home)` is better than `Tab("Home", systemImage: "house", value: 0)`.
 - Strongly prefer to avoid breaking up view bodies using computed properties or methods that return `some View`, even if `@ViewBuilder` is used. Extract them into separate `View` structs instead, placing each into its own file. (Yes, this is repeated, but it’s so important it needs to be mentioned twice.)
+- A `.task { ... }` modifier attached to a view that lives inside a conditional `if/else` branch is cancelled when an `@Observable` state change causes SwiftUI to switch branches — the replacement view doesn't inherit the previous branch's task. Lifecycle-driving tasks (bootstrap, long-running drains, retry loops) must be attached to the always-present outer container (`Group`, `NavigationStack`, etc.), not to a conditional inner view. Use `.task(id: trigger)` on the outer container with `@State` keying re-firing.
 
 
 ## Animating views
