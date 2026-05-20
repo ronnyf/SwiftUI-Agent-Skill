@@ -30,6 +30,11 @@ These rules help ensure code is efficient and works well in the long term.
 - Never attempt to use `@AppStorage` inside an `@Observable` class, even if marked `@ObservationIgnored` – it will *not* trigger view updates when a change happens.
 
 
+## macOS app lifecycle
+
+- A SwiftUI macOS app that uses `Settings { ... }` and wants Terminal.app/iTerm-style "quit when the last main window closes" cannot return unconditional `true` from `applicationShouldTerminateAfterLastWindowClosed(_:)`. The `Settings` scene creates a real `NSWindow` that counts toward "open windows," so closing the main window with Settings still up keeps the app alive. Filter `NSApp.windows` by identifier (e.g., `window.identifier?.rawValue.contains("Settings") != true`) and return `nonSettings.isEmpty`. If quit-on-last-window is not desired (the macOS default), omit the `NSApplicationDelegateAdaptor` entirely.
+- Prefer `@Environment(\.dismissWindow)` (macOS 14+) over imperative `NSApp.keyWindow?.close()` for closing the host window from a SwiftUI view — the no-arg form dismisses **this** action's host window, no `keyWindow` lookup race.
+
 ## SwiftData
 
 - If you only need the number of items matching a query, consider `ModelContext.fetchCount()` with a fetch descriptor. This will *not* live update if the data changes unless something else triggers the update, such as `@Query`, so it should be used carefully.
