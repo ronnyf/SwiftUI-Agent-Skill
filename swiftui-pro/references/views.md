@@ -6,6 +6,7 @@
 - If the user has created a handful of small, private helper `some View` properties for structural readability, and they both belong to the same concern as `body` and would fit in `body` at an acceptable length if inlined, these can be left alone. Otherwise, they should be extracted to new `View` structs.
 - Button actions should be extracted from view bodies into separate methods, to avoid mixing layout and logic.
 - Similarly, general business logic should not live inline in `task()`, `onAppear()` or elsewhere in `body`.
+- Drive async work tied to a view's lifetime from a `.task` / `.task(id:)` view modifier rather than storing a `Task` as a property (e.g. on an `@Observable`) and cancelling it by hand — SwiftUI then cancels the work automatically when the view leaves the view graph.
 - Prefer to place view logic into view models or similar, so it can be tested. For more help with testing, suggest the [Swift Testing Pro agent skill](https://github.com/twostraws/swift-testing-agent-skill).
 - Each type (struct, class, enum) should be in its own Swift file. Flag files containing multiple type definitions.
 - Unless a full-screen editing experience is required, prefer using `TextField` with `axis: .vertical` to using `TextEditor`, because it allows placeholder text. If a specific minimum height is required for `TextField`, use something like `lineLimit(5...)`.
