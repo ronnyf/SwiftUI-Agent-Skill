@@ -20,7 +20,8 @@ These rules help ensure code is efficient and works well in the long term.
 
 ## Bindings
 
-- Strongly prefer to avoid creating bindings using `Binding(get:set:)` in view body code. It is much cleaner and simpler to use a binding provided by `@State`, `@Binding` or similar, then use `onChange()` to trigger any effects.
+- When a child view both reads and writes state owned by its parent, pass a `@Binding` (e.g. `@Binding var isPresented`), not an `onChange`/callback closure. Callback closures are for one-shot actions with no parent state to mutate (mirroring `Button`'s `action:`).
+- Prefer `$`-prefixed projected bindings over manually-constructed `Binding(get:set:)` closures inline in a view body — route side effects through `onChange()` and type projections through a `Binding` extension (or `*(item:)` APIs) instead.
 - If the user needs to enter a number into a `TextField`, bind the `TextField` to a numeric value such as `Int` or `Double`, then use its `format` initializer like this: `TextField("Enter your score", value: $score, format: .number)`. Apply either `.keyboardType(.numberPad)` (for integers) or `.keyboardType(.decimalPad)` (for floating-point numbers) as appropriate. Using the modifier alone is *not* sufficient.
 
 
