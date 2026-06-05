@@ -10,6 +10,7 @@ These rules help ensure code is efficient and works well in the long term.
 - `@Observable` classes must be marked `@MainActor` unless the project has Main Actor default actor isolation. Flag any `@Observable` class missing this annotation.
 - All shared data should use `@Observable` classes with `@State` (for ownership) and `@Bindable` / `@Environment` (for passing).
 - Strongly prefer not to use `ObservableObject`, `@Published`, `@StateObject`, `@ObservedObject`, or `@EnvironmentObject` unless they are unavoidable, or if they exist in legacy/integration contexts when changing architecture would be complicated.
+- A "stale value / didn't update / re-doing the action does nothing" bug is almost always a **state-consistency** problem — an `@State` mirror has drifted out of sync with its source of truth — not the view modifier that observes it. `.task(id:)` / `.onChange` firing only on value-change is correct behavior and merely makes the desync *silent* (a no-op rather than an error); swapping `.task(id:)` ↔ `.onChange` does not fix it, since they share change-only semantics. Fix by removing the desyncable mirror — derive or bind directly from the source of truth — rather than patching the observation.
 
 
 ## Local state
