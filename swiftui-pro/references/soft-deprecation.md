@@ -1,0 +1,1 @@
+../../swiftui-specialist/references/soft-deprecation.md
