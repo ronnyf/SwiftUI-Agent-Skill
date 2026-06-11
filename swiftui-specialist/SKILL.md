@@ -60,6 +60,7 @@ If doing a partial review, load only the relevant sections and reference files.
 - Use `.scrollIndicators(.hidden)` not `showsIndicators: false`.
 - Never use `Text` concatenation with `+`; use text interpolation instead.
 - If `ObservableObject` is required (e.g. Combine debouncer), ensure `import Combine` is present — SwiftUI no longer re-exports it.
+- To add commands to a STANDARD macOS menu (View/Edit/File/…), use `CommandGroup(before:/after: <CommandGroupPlacement>)`, never `CommandMenu(name)` — `CommandMenu` always creates a NEW top-level menu, so reusing a system menu's name (e.g. `CommandMenu("View")`) produces TWO menus of that name. The View menu's built-in groups are `.sidebar` (Show/Hide Sidebar, Enter/Exit Full Screen) and `.toolbar` (Show/Hide Toolbar); `.sidebar` is present even with no sidebar. Reserve `CommandMenu` for genuinely new top-level menus.
 
 *For soft-deprecated patterns, read `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.*
 
@@ -113,6 +114,13 @@ If doing a partial review, load only the relevant sections and reference files.
 - If an alert has only a single dismiss "OK" button with no action, the button can be omitted entirely.
 - Prefer `sheet(item:)` over `sheet(isPresented:)` when presenting optional data.
 - When `sheet(item:)` accepts the item as its only init parameter, prefer `sheet(item: $item, content: SomeView.init)`.
+
+
+## §Scenes & Windows (macOS multi-window)
+
+- `@State` on the `App` struct is a **process-global singleton** — one `App` instance backs every window a `WindowGroup` produces, so that value is shared across all of them. Put per-window state (window-derived geometry, per-window models) in the window's root content view's `@State`, not on the `App`. Only app-global user preferences belong at `App` scope. (A renderer that writes window-derived values back into App-level shared state will corrupt every other window.)
+- macOS SwiftUI has **no native "window did/will close" side-effect hook** (through macOS 15). The dismissal surface is `dismissWindow` / `DismissWindowAction` / `windowDismissBehavior` / `dismissalConfirmationDialog` — programmatic / confirmation only. `onDisappear` fires on Spaces toggle, app hide, and WindowGroup re-evaluation, so it is **not** a window-close signal. `NSWindow.willCloseNotification` is a global broadcast every window's view receives; filtering by the `WindowGroup` scene-id prefix matches all sibling windows (closing one tears down them all).
+- For window-scoped teardown, use an **`isolated deinit`** (SE-0371, Swift 6.1+) on the per-window `@State`-owned `@MainActor` model: when the window closes, SwiftUI releases that scene's `@State`, the model's deinit fires for that window alone, and `isolated deinit` runs the `@MainActor`-isolated cleanup safely. This is Apple's own pattern (AVKit `VideoState`, Music player controllers, Appearance prefs). Correctness depends on the `@State` actually deallocating on close — verify (e.g. a `#if DEBUG` log in the teardown).
 
 
 ## §Design
