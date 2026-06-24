@@ -84,6 +84,11 @@ Phrase: "how do I define a custom environment key with @Entry?"
 Expected: NOT `dataflow`
 Reasoning: @Entry and environment mechanics belong to `environment`, not `dataflow` (which is about @State/@Binding/@Observable).
 
+**T-E5 (negative):**
+Phrase: "I stored a closure in my custom EnvironmentValues extension — now views re-render constantly"
+Expected: NOT `dataflow`
+Reasoning: Constant invalidation from a closure in an environment key is an environment stability topic, not a dataflow (@State/@Binding/@Observable) topic.
+
 ---
 
 ### T-foreach — ForEach/List/Table identity
@@ -106,6 +111,11 @@ Phrase: "my ForEach list items flicker or reset their state when the collection 
 Expected: NOT `modifiers`
 Reasoning: Flickering from unstable identity is a ForEach identity problem, not a conditional-modifier problem.
 
+**T-F5 (negative):**
+Phrase: "how should I identify rows in a Table view for correct diffing?"
+Expected: NOT `structure`
+Reasoning: Table row identity for correct diffing belongs to `foreach`; `structure` is about view factoring and invalidation boundaries.
+
 ---
 
 ### T-modifiers — conditional view modifiers, structural identity
@@ -124,6 +134,11 @@ Phrase: "why does my custom conditional view modifier break animations and reset
 Expected: NOT `animations`
 Reasoning: The breakage is caused by structural identity loss in the modifier, not an animations mechanics issue.
 
+**T-M4 (negative):**
+Phrase: "toggling a conditional modifier causes abrupt jumps instead of smooth animations"
+Expected: NOT `scenes`
+Reasoning: Abrupt jumps from toggling a conditional modifier are a structural-identity issue in `modifiers`, not a scene/presentation lifetime issue.
+
 ---
 
 ### T-animations — @Animatable, animatableData
@@ -141,6 +156,11 @@ Expected: `animations`
 Phrase: "how do I make a custom Shape animatable without writing animatableData by hand?"
 Expected: NOT `modifiers`
 Reasoning: The topic is Animatable protocol conformance, not conditional modifiers.
+
+**T-A4 (negative):**
+Phrase: "some of my custom type's properties can't be animated — how do I mark them?"
+Expected: NOT `performance`
+Reasoning: Marking non-animatable properties with @AnimatableIgnored is an animations mechanics topic, not a performance optimization topic.
 
 ---
 
@@ -395,10 +415,6 @@ Phrase: "I stored a closure in my custom EnvironmentValues extension — now vie
 Expected: `environment`
 Reasoning: Closures in custom environment keys causing constant invalidation is environment.md's closure section.
 
-**V-E2 (negative):**
-Phrase: "I stored a closure in my custom EnvironmentValues extension — now views re-render constantly"
-Expected: NOT `dataflow`
-
 ---
 
 ### V-foreach
@@ -408,10 +424,6 @@ Phrase: "how should I identify rows in a Table view for correct diffing?"
 Expected: `foreach`
 Reasoning: Table identity requirements are explicitly covered in foreach.md.
 
-**V-F2 (negative):**
-Phrase: "how should I identify rows in a Table view for correct diffing?"
-Expected: NOT `structure`
-
 ---
 
 ### V-modifiers
@@ -419,10 +431,6 @@ Expected: NOT `structure`
 **V-M1 (positive):**
 Phrase: "toggling a conditional modifier causes abrupt jumps instead of smooth animations"
 Expected: `modifiers`
-
-**V-M2 (negative):**
-Phrase: "toggling a conditional modifier causes abrupt jumps instead of smooth animations"
-Expected: NOT `scenes`
 
 ---
 
@@ -432,10 +440,6 @@ Expected: NOT `scenes`
 Phrase: "some of my custom type's properties can't be animated — how do I mark them?"
 Expected: `animations`
 Reasoning: @AnimatableIgnored macro for non-animatable properties is animations.md.
-
-**V-A2 (negative):**
-Phrase: "some of my custom type's properties can't be animated — how do I mark them?"
-Expected: NOT `performance`
 
 ---
 
@@ -511,7 +515,7 @@ Reasoning: accessibilityDifferentiateWithoutColor handling is accessibility.md.
 
 **V-ACC2 (negative):**
 Phrase: "I use color to distinguish status — what do I need to do for colorblind users?"
-Expected: NOT `design`
+Expected: NOT `structure`
 
 ---
 
@@ -573,10 +577,12 @@ Reasoning: Compiler-warning deprecations at SDK 27.0 are hard-deprecated (deprec
 
 | Section | Positives | Negatives | Total |
 |---------|-----------|-----------|-------|
-| Training | 40 | 16 | 56 |
-| Validation (held-out) | 26 | 10 | 36 |
-| **Total** | **66** | **26** | **92** |
+| Training | 41 | 20 | 61 |
+| Validation (held-out) | 19 | 12 | 31 |
+| **Total** | **60** | **32** | **92** |
 
-Held-out fraction: 36/92 ≈ 39% (target ≈ ⅓; slightly over, which is acceptable — more held-out is fine).
+Held-out fraction: 31/92 ≈ 34% (target ≈ ⅓; within acceptable 33–40% range).
+
+Negative fraction: Training 20/61 ≈ 32.8%; Validation 12/31 ≈ 38.7% (gap ≈ 6pp; within ~5pp target).
 
 All 16 surviving topics are covered in both sections.
