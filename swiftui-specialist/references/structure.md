@@ -313,6 +313,6 @@ Group {
 
 ## Practical composition rules
 
-- Unless a full-screen editing experience is required, prefer using `TextField` with `axis: .vertical` to using `TextEditor`, because it allows placeholder text. If a specific minimum height is required for `TextField`, use something like `lineLimit(5...)`.
+- `TextField` with `axis: .vertical` allows placeholder text that `TextEditor` lacks; when a specific minimum height is required, use something like `lineLimit(5...)`.
 - If a button action can be provided directly as an `action` parameter, do so. For example: `Button("Label", systemImage: "plus", action: myAction)` is preferred over `Button("Label", systemImage: "plus") { action() }`.
 - `tabViewStyle(.tabBarOnly)` is macOS 15+ — produces a clean tab strip below the title bar. `.sidebarAdaptable` and `.grouped` are also macOS 15+. On older deployment targets only `.automatic` and `.page` are available; flag accordingly.
