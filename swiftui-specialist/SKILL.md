@@ -58,7 +58,7 @@ If doing a partial review, load only the relevant sections and reference files.
 - When targeting iOS 26+, use the native `WebView` (requires `import WebKit`) instead of hand-wrapped `WKWebView`.
 - `ForEach` over an `enumerated()` sequence: use `ForEach(items.enumerated(), id: \.element.id)` directly, do not convert to an array first.
 - Use `.scrollIndicators(.hidden)` not `showsIndicators: false`.
-- Never use `Text` concatenation with `+`; use text interpolation instead.
+- Never use `Text` concatenation with `+`; interpolate the `Text` values instead: `Text("\(t1)\(t2)")` where `t1`/`t2` are styled `Text` (preserves per-segment modifiers; plain string interpolation does not).
 - If `ObservableObject` is required (e.g. Combine debouncer), ensure `import Combine` is present — SwiftUI no longer re-exports it.
 - To add commands to a STANDARD macOS menu (View/Edit/File/…), use `CommandGroup(before:/after: <CommandGroupPlacement>)`, never `CommandMenu(name)` — `CommandMenu` always creates a NEW top-level menu, so reusing a system menu's name (e.g. `CommandMenu("View")`) produces TWO menus of that name. The View menu's built-in groups are `.sidebar` (Show/Hide Sidebar, Enter/Exit Full Screen) and `.toolbar` (Show/Hide Toolbar); `.sidebar` is present even with no sidebar. Reserve `CommandMenu` for genuinely new top-level menus.
 
