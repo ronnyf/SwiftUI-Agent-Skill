@@ -19,6 +19,7 @@ When asked for general guidance across a large codebase, scan to identify smalle
 1. Check view structure, modifiers, and animations — §Views below, then read `references/structure.md`, `references/modifiers.md`, `references/animations.md`.
 1. Validate data flow — §Data Flow below, then read `references/dataflow.md` + `references/foreach.md` for deep `@Observable`, `@Binding`, and collection-identity rules.
 1. Ensure navigation is updated and performant — §Navigation.
+1. Check scene / presentation / window state lifetime & teardown — §Scenes & Windows.
 1. Ensure the code meets Apple's Human Interface Guidelines — §Design.
 1. Validate accessibility compliance — §Accessibility.
 1. Ensure the code runs efficiently — §Performance.
@@ -118,7 +119,7 @@ If doing a partial review, load only the relevant sections and reference files.
 
 ## §Scenes & Windows
 
-- `@State` lifetime follows the view's **structural-identity node**, and sheet / navigation / window / iPad-scene teardown each differ. For presentation- or scene-scoped state lifetime, `.id()`, `sheet(item:)`, macOS window close, `isolated deinit`, or `@SceneStorage`, read `references/scenes.md`.
+- `@State` lifetime follows the view's **structural-identity node**, and sheet / navigation / window / iPad-scene teardown each differ — see `references/scenes.md`.
 
 
 ## §Design
@@ -211,29 +212,24 @@ If doing a partial review, load only the relevant sections and reference files.
 
 ## References
 
-Load on demand — read the file(s) for the topic you're working on. Do **not** invoke another skill; everything is here.
+Load on demand — read the file for your topic. Do **not** invoke another skill.
 
-**Idiomatic patterns (Apple):**
-- `references/structure.md` — factoring sections into separate `View` structs vs. computed properties, init costs, single-child `Group` anti-pattern.
-- `references/dataflow.md` — passing/storing data (`@State`, `@Binding`, `@Observable`), narrowing value-type inputs, `@MainActor`/`Equatable` on models, per-property observation granularity traps, collection elements to rows, `.onChange` isolation, KeyPath vs. closure bindings.
-- `references/environment.md` — `@Environment`, `EnvironmentKey`, `EnvironmentValues`, `FocusedValue`, `@Entry`, and performance pitfalls.
-- `references/foreach.md` — `ForEach` / `List` / `Table` / `OutlineGroup` identity requirements, index/transient-id anti-patterns, row-view structure and `List` performance.
-- `references/scenes.md` — scene / presentation / window lifetime & teardown: `@State` structural-identity node, `.id()` resets, `.task` carve-out for work that outlives the view, `sheet(item:)` mid-session teardown, `sheet(isPresented:)` non-reset, `fullScreenCover` / `.popover` / `inspector()` / `onDismiss` timing, navigation-destination registration scope + `NavigationSplitView` columns, macOS `WindowGroup` / `Window` close (`onDisappear` fires; `NSWindow.willCloseNotification`; `Settings`-scene quit trap; `isolated deinit` vs retain cycles), iPad `@SceneStorage`.
-- `references/modifiers.md` — view modifier usage, especially conditional modifiers.
-- `references/animations.md` — custom `Animatable` types.
+- `references/structure.md` — separate `View` struct vs computed property / `@ViewBuilder` method, `init` cost, single-child `Group` anti-pattern, extract-for-testability; also see performance.md.
+- `references/dataflow.md` — `@Observable` / `@State` / `@Binding`, per-property tracking, collection granularity, `.onChange` isolation, KeyPath bindings, numeric `TextField` `format:`, "stale value / didn't update" desynced `@State` mirror, SwiftData `@Query` / `modelContext`; for the SwiftData model layer use swiftdata-pro.
+- `references/environment.md` — `@Environment`, `EnvironmentKey` / `EnvironmentValues`, `FocusedValue`, `@Entry`, comparison perf; also see scenes.md for propagation across sheets.
+- `references/foreach.md` — `ForEach` / `List` / `Table` / `OutlineGroup` element identity, index-as-id / transient-id anti-patterns, `List` performance.
+- `references/modifiers.md` — conditional (`.if`) view modifier anti-pattern.
+- `references/animations.md` — custom `Animatable` types, `@Animatable` macro, `animatableData`.
 - `references/localization.md` — `LocalizedStringKey`, `LocalizedStringResource` vs `String`, `bundle: #bundle`, format styles, RTL, runtime case transforms, translator comments.
-- `references/soft-deprecation.md` — how to identify soft-deprecated APIs and when to migrate.
-- `references/soft-deprecated-apis.md` — searchable list of all soft-deprecated SwiftUI APIs with replacements.
-
-**Review checklist depth (Paul Hudson):**
-- `references/accessibility.md` — Dynamic Type, VoiceOver, Reduce Motion.
-- `references/performance.md` — optimizing SwiftUI for performance.
-- `references/swift.md` — modern Swift, including Swift Concurrency.
-
-**SDK 27 migration (read only when targeting OS 27+):**
-- `references/state-macro.md` — `@State` migrated from property wrapper to macro; source incompatibilities and fixes.
-- `references/content-builder.md` — `@ContentBuilder` unification and source incompatibilities.
-- `references/deprecations.md` — APIs hard-deprecated in SDK 27.0.
+- `references/soft-deprecation.md` — how to *identify* a soft-deprecated API (`deprecated: 100000.0`), the out-of-scope scoping rule, when to migrate; the list is soft-deprecated-apis.md.
+- `references/soft-deprecated-apis.md` — the searchable *list* of soft-deprecated SwiftUI APIs + replacements (`NavigationView`, `foregroundColor`, …).
+- `references/performance.md` — `_ConditionalContent` from `if/else`, `@ViewBuilder`-let, `LazyVStack` / `LazyHStack`, frequent-`body` recompute, escaping-closure storage.
+- `references/swift.md` — modern Swift idioms (`count(where:)`, `Date.now`, `FormatStyle`), redundant `MainActor.run`; NOT for deep concurrency — see swift-concurrency-pro.
+- `references/accessibility.md` — Dynamic Type / `@ScaledMetric`, VoiceOver labels, Reduce Motion, `.labelStyle(.iconOnly)`, `accessibilityInputLabels`.
+- `references/scenes.md` — scene / window state *lifetime* & teardown: `@State` resets via `.id()` / branch flip, `.task` view-scoped vs work that outlives the view, `sheet(item:)` / `fullScreenCover` teardown, `navigationDestination` registration scope, macOS window close + `Settings` won't-quit trap, iPad `@SceneStorage`; also see dataflow.md for *correctness*.
+- `references/state-macro.md` — `@State` property-wrapper → macro migration, init-assignment incompatibilities; NOT for pre-27 targets.
+- `references/content-builder.md` — `@ContentBuilder` unification of `@ViewBuilder`, ambiguous `overlay` / `background` ShapeStyle errors; NOT for pre-27 targets.
+- `references/deprecations.md` — APIs *hard*-deprecated in SDK 27.0 (e.g. `statusBarHidden` on visionOS); NOT for pre-27, NOT for soft-deprecations.
 
 
 ## Output Format
