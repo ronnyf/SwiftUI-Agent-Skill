@@ -120,6 +120,8 @@ Pass each subview only the data it actually uses — the same rule as "Pass view
 
 Computed properties and small `@ViewBuilder` helpers still have a place for tiny fragments reused two or three times within the same body that have no independent invalidation story. The rule targets factoring done for *organization* or to manage *body length*, where a real `View` type does the right thing.
 
+A separate `View` type also makes its logic independently testable — prefer extracting logic into `@Observable` view models so it can be unit-tested without a running SwiftUI view. For dedicated testing guidance, see the [Swift Testing Pro skill](https://github.com/twostraws/swift-testing-agent-skill).
+
 ### Multi-section detail views
 
 The most common write-from-requirements case where this rule gets dropped: a prompt asks for a `SomethingDetailView` with multiple distinct sections — header + body + metadata + related items, header + ingredients + steps + footer, hero + description + specs + reviews, etc. The training-data shape for this prompt is "single `View` with `private var header: some View`, `private var body: some View`, etc." That shape is wrong. Always factor each named section as a separate `View` type with narrow inputs.
@@ -308,3 +310,9 @@ Group {
 }
 .accessibilityHidden(label == nil)
 ```
+
+## Practical composition rules
+
+- `TextField` with `axis: .vertical` allows placeholder text that `TextEditor` lacks; when a specific minimum height is required, use something like `lineLimit(5...)`.
+- If a button action can be provided directly as an `action` parameter, do so. For example: `Button("Label", systemImage: "plus", action: myAction)` is preferred over `Button("Label", systemImage: "plus") { action() }`.
+- `tabViewStyle(.tabBarOnly)` is macOS 15+ — produces a clean tab strip below the title bar. `.sidebarAdaptable` and `.grouped` are also macOS 15+. On older deployment targets only `.automatic` and `.page` are available; flag accordingly.
