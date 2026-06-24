@@ -217,7 +217,7 @@ Load on demand — read the file for your topic. Do **not** invoke another skill
 - `references/structure.md` — separate `View` struct vs computed property / `@ViewBuilder` method, `init` cost, single-child `Group` anti-pattern, extract-for-testability; also see performance.md.
 - `references/dataflow.md` — `@Observable` / `@State` / `@Binding`, per-property tracking, collection granularity, `.onChange` isolation, KeyPath bindings, numeric `TextField` `format:`, "stale value / didn't update" desynced `@State` mirror, SwiftData `@Query` / `modelContext`; for the SwiftData model layer use swiftdata-pro.
 - `references/environment.md` — `@Environment`, `EnvironmentKey` / `EnvironmentValues`, `FocusedValue`, `@Entry`, comparison perf; also see scenes.md for propagation across sheets.
-- `references/foreach.md` — `ForEach` / `List` / `Table` / `OutlineGroup` element identity, index-as-id / transient-id anti-patterns, `List` performance.
+- `references/foreach.md` — `ForEach` / `List` / `Table` / `OutlineGroup` element identity, index-as-id / transient-id anti-patterns, identity-driven row diffing; scroll/lazy perf → performance.md.
 - `references/modifiers.md` — conditional (`.if`) view modifier anti-pattern.
 - `references/animations.md` — custom `Animatable` types, `@Animatable` macro, `animatableData`.
 - `references/localization.md` — `LocalizedStringKey`, `LocalizedStringResource` vs `String`, `bundle: #bundle`, format styles, RTL, runtime case transforms, translator comments.
