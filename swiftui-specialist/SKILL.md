@@ -116,11 +116,9 @@ If doing a partial review, load only the relevant sections and reference files.
 - When `sheet(item:)` accepts the item as its only init parameter, prefer `sheet(item: $item, content: SomeView.init)`.
 
 
-## §Scenes & Windows (macOS multi-window)
+## §Scenes & Windows
 
-- `@State` on the `App` struct is a **process-global singleton** — one `App` instance backs every window a `WindowGroup` produces, so that value is shared across all of them. Put per-window state (window-derived geometry, per-window models) in the window's root content view's `@State`, not on the `App`. Only app-global user preferences belong at `App` scope. (A renderer that writes window-derived values back into App-level shared state will corrupt every other window.)
-- macOS SwiftUI has **no native "window did/will close" side-effect hook** (through macOS 15). The dismissal surface is `dismissWindow` / `DismissWindowAction` / `windowDismissBehavior` / `dismissalConfirmationDialog` — programmatic / confirmation only. `onDisappear` fires on Spaces toggle, app hide, and WindowGroup re-evaluation, so it is **not** a window-close signal. `NSWindow.willCloseNotification` is a global broadcast every window's view receives; filtering by the `WindowGroup` scene-id prefix matches all sibling windows (closing one tears down them all).
-- For window-scoped teardown, use an **`isolated deinit`** (SE-0371, Swift 6.1+) on the per-window `@State`-owned `@MainActor` model: when the window closes, SwiftUI releases that scene's `@State`, the model's deinit fires for that window alone, and `isolated deinit` runs the `@MainActor`-isolated cleanup safely. This is Apple's own pattern (AVKit `VideoState`, Music player controllers, Appearance prefs). Correctness depends on the `@State` actually deallocating on close — verify (e.g. a `#if DEBUG` log in the teardown).
+- `@State` lifetime follows the view's **structural-identity node**, and sheet / navigation / window / iPad-scene teardown each differ. For presentation- or scene-scoped state lifetime, `.id()`, `sheet(item:)`, macOS window close, `isolated deinit`, or `@SceneStorage`, read `references/scenes.md`.
 
 
 ## §Design
@@ -219,6 +217,7 @@ Load on demand — read the file(s) for the topic you're working on. Do **not** 
 - `references/dataflow.md` — passing/storing data (`@State`, `@Binding`, `@Observable`), narrowing value-type inputs, `@MainActor`/`Equatable` on models, per-property observation granularity traps, collection elements to rows, `.onChange` isolation, KeyPath vs. closure bindings.
 - `references/environment.md` — `@Environment`, `EnvironmentKey`, `EnvironmentValues`, `FocusedValue`, `@Entry`, and performance pitfalls.
 - `references/foreach.md` — `ForEach` / `List` / `Table` / `OutlineGroup` identity requirements, index/transient-id anti-patterns, row-view structure and `List` performance.
+- `references/scenes.md` — scene / presentation / window lifetime & teardown: `@State` structural-identity node, `.id()` resets, `.task` carve-out for work that outlives the view, `sheet(item:)` mid-session teardown, `sheet(isPresented:)` non-reset, `fullScreenCover` / `.popover` / `inspector()` / `onDismiss` timing, navigation-destination registration scope + `NavigationSplitView` columns, macOS `WindowGroup` / `Window` close (`onDisappear` fires; `NSWindow.willCloseNotification`; `Settings`-scene quit trap; `isolated deinit` vs retain cycles), iPad `@SceneStorage`.
 - `references/modifiers.md` — view modifier usage, especially conditional modifiers.
 - `references/animations.md` — custom `Animatable` types.
 - `references/localization.md` — `LocalizedStringKey`, `LocalizedStringResource` vs `String`, `bundle: #bundle`, format styles, RTL, runtime case transforms, translator comments.
