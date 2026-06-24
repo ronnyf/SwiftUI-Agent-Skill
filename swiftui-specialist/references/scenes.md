@@ -43,12 +43,12 @@ Identity is determined by **view type + graph position + any `.id(value)` modifi
 
 - There is **no native window-close hook** (no `windowWillClose`-equivalent SwiftUI modifier through current macOS), **but the root view's `onDisappear` *does* fire on macOS window close** — this is the simpler hook for window-scoped teardown.
 - **`NSWindow.willCloseNotification` is a global broadcast** — every window's view receives it. Filtering by the `WindowGroup` scene-id prefix matches **all sibling windows** of that group, not just the one that closed, so it is not a per-window signal on its own.
-- The **`Settings`-scene "won't quit after last window" trap:** an app with a `Settings` scene can keep the process alive after the last visible window closes; account for it when wiring quit/teardown behavior.
+- The **`Settings`-scene "won't quit after last window" trap:** a SwiftUI macOS app that uses `Settings { ... }` and wants Terminal.app/iTerm-style "quit when the last main window closes" cannot return unconditional `true` from `applicationShouldTerminateAfterLastWindowClosed(_:)`. The `Settings` scene creates a real `NSWindow` that counts toward "open windows," so closing the main window with Settings still up keeps the app alive. Filter `NSApp.windows` by identifier (e.g., `window.identifier?.rawValue.contains("Settings") != true`) and return `nonSettings.isEmpty`. If quit-on-last-window is not desired (the macOS default), omit the `NSApplicationDelegateAdaptor` entirely.
 - **`isolated deinit` (SE-0371)** is an actor-isolation feature for safely running `@MainActor` teardown when the model deallocates. It is **useless against retain cycles** — a `.task` closure or a `NotificationCenter` observer that keeps the model alive defeats it (the deinit simply never runs). It is a **supplement to, not a replacement for, breaking ownership cycles**: first ensure the model is actually released (break the cycle), *then* use `isolated deinit` to run the `@MainActor` cleanup safely.
 
 ### AppKit bridge: native `NSWindow` title-bar tabs
 
-(Home for the native `NSWindow` title-bar-tabs AppKit bridge — when a SwiftUI macOS window needs system window-tab grouping that `WindowGroup` does not expose, bridge to `NSWindow` here.)
+For native `NSWindow` title-bar tabs (Safari / Terminal.app / Xcode-style chrome with drag-reorder + tear-off + Window-menu integration), there is **no public SwiftUI modifier**. SwiftUI sets `tabbingIdentifier` / `tabbingMode` privately on each `WindowGroup` window. To force tabs (independent of the user's "Prefer tabs" setting), bridge to AppKit via an `NSViewRepresentable` window-accessor and set `NSWindow.tabbingMode = .preferred`. If you only need an in-content tab strip (without title-bar chrome), prefer `TabView` and skip the AppKit hop.
 
 ## iPad multi-scene
 

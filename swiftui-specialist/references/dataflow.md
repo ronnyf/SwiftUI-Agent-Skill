@@ -105,6 +105,7 @@ If you don't want to split a large value type into smaller ones — typically be
 ## View-local state with @State
 
 - Always mark `@State` properties as `private`. If you encounter a `@State` variable that already has an access control specified, recommend changing it to `private`, but don't change it (to avoid breaking the build), unless you are instructed to do that.
+- If a view stores a class instance that contains expensive-to-recompute data, e.g. `CIContext`, it can be stored using `@State` even though it is not an observable object. This effectively uses `@State` as a cache — storing something persistently, but not doing any change tracking on it since it's not an observable object.
 
 ## Model objects with @Observable
 
@@ -655,6 +656,8 @@ Do NOT apply this pattern when:
 
 ## Bindings
 
+- If the user needs to enter a number into a `TextField`, bind the `TextField` to a numeric value such as `Int` or `Double`, then use its `format` initializer: `TextField("Enter your score", value: $score, format: .number)`. Apply either `.keyboardType(.numberPad)` (for integers) or `.keyboardType(.decimalPad)` (for floating-point numbers) as appropriate. Using the keyboard-type modifier alone is *not* sufficient — without the `format:` initializer the field does not parse the raw string to a numeric value.
+
 ### Use KeyPath bindings, not closure bindings
 
 Always prefer to use a KeyPath-based Binding with subscripts instead of a get-set binding with a closure. Consider this model and child view:
@@ -754,3 +757,10 @@ extension FocusedValues {
 ```
 
 When reviewing existing code that defines custom environment, transaction, container, or focused values via manual `EnvironmentKey` / `ContainerValuesKey` / `FocusedValueKey` conformances and a `get`/`set` extension property, surface the `@Entry` refactor as a top-line review finding — not a footnote, not an "Optional Improvements" aside, not a "looks good, also consider…" tail. The manual form is older boilerplate `@Entry` was specifically designed to replace; treating the two as a stylistic toss-up is incorrect. The deployment target gates availability (`@Entry` requires iOS 18 / macOS 15 / Xcode 16); when the target isn't specified in the code under review, recommend the refactor without a defensive hedge — note availability as a one-line caveat at most. (Don't perform the rewrite unprompted during a review — show the diff or refactored snippet as the finding.)
+
+## SwiftData integration notes
+
+- `ModelContext.fetchCount()` with a fetch descriptor is efficient when only the count of matching items is needed. **However**, it will *not* live-update if the data changes unless something else also triggers an update (e.g., an active `@Query`); use it carefully in contexts where freshness matters.
+- If the project uses SwiftData with CloudKit sync, additional constraints apply: never use `@Attribute(.unique)`; model properties must always either have default values or be marked optional; all relationships must be marked optional.
+
+For depth on SwiftData model configuration, migration, relationships, and CloudKit sync, see the [SwiftData Pro skill](https://github.com/twostraws/swiftdata-agent-skill).

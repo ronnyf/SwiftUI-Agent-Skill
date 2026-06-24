@@ -226,8 +226,6 @@ Load on demand — read the file(s) for the topic you're working on. Do **not** 
 
 **Review checklist depth (Paul Hudson):**
 - `references/api.md` — modern API and the deprecated code it replaces.
-- `references/views.md` — view composition and animation.
-- `references/data.md` — data flow, shared state, property wrappers (overview).
 - `references/navigation.md` — `NavigationStack`/`NavigationSplitView`, alerts, dialogs, sheets.
 - `references/design.md` — accessible apps meeting Apple's HIG.
 - `references/accessibility.md` — Dynamic Type, VoiceOver, Reduce Motion.
