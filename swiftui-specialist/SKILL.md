@@ -110,7 +110,7 @@ If doing a partial review, load only the relevant sections and reference files.
 - Prefer `navigationDestination(for:)` over `NavigationLink(destination:)`; flag the old pattern.
 - Never mix `navigationDestination(for:)` and `NavigationLink(destination:)` in the same hierarchy.
 - `navigationDestination(for:)` must be registered once per data type.
-- Always attach `confirmationDialog()` to the UI that triggers it.
+- Always attach `confirmationDialog()` to the UI that triggers it (ensures Liquid Glass animations originate from the correct source).
 - If an alert has only a single dismiss "OK" button with no action, the button can be omitted entirely.
 - Prefer `sheet(item:)` over `sheet(isPresented:)` when presenting optional data.
 - When `sheet(item:)` accepts the item as its only init parameter, prefer `sheet(item: $item, content: SomeView.init)`.
@@ -132,6 +132,7 @@ If doing a partial review, load only the relevant sections and reference files.
 - Prefer `Label` over `HStack` for icon + text side by side.
 - Prefer system hierarchical styles (secondary/tertiary) over manual opacity.
 - In `Form`, wrap `Slider` in `LabeledContent` for correct layout.
+- `LabeledContent` also works outside `Form` for title-value displays; define a custom `LabeledContentStyle` for consistent layout across views.
 - When using `RoundedRectangle`, `.continuous` is the default — no need to specify it.
 - Use `bold()` over `fontWeight(.bold)`; only use `fontWeight()` for weights other than bold when there is a specific reason.
 - Avoid hard-coded padding and stack spacing unless requested.
@@ -225,13 +226,9 @@ Load on demand — read the file(s) for the topic you're working on. Do **not** 
 - `references/soft-deprecated-apis.md` — searchable list of all soft-deprecated SwiftUI APIs with replacements.
 
 **Review checklist depth (Paul Hudson):**
-- `references/api.md` — modern API and the deprecated code it replaces.
-- `references/navigation.md` — `NavigationStack`/`NavigationSplitView`, alerts, dialogs, sheets.
-- `references/design.md` — accessible apps meeting Apple's HIG.
 - `references/accessibility.md` — Dynamic Type, VoiceOver, Reduce Motion.
 - `references/performance.md` — optimizing SwiftUI for performance.
 - `references/swift.md` — modern Swift, including Swift Concurrency.
-- `references/hygiene.md` — clean compilation and long-term maintainability.
 
 **SDK 27 migration (read only when targeting OS 27+):**
 - `references/state-macro.md` — `@State` migrated from property wrapper to macro; source incompatibilities and fixes.
