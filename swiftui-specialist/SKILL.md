@@ -71,6 +71,8 @@ If doing a partial review, load only the relevant sections and reference files.
 - Strongly prefer separate `View` structs over computed properties or `@ViewBuilder` methods that return `some View`. Computed properties share the parent's invalidation boundary; dedicated structs own their own `@State`, lifecycle, and `#Preview`.
 - Flag excessively long `body` properties — break into extracted subviews.
 - Button actions should be extracted into separate methods, not inlined in view bodies.
+- A `Button` hit-tests only its **rendered content** — `.padding()` and `.frame(maxWidth: .infinity)` around a short label are transparent dead zones, so clicks land on the glyphs and nowhere else. Put `.contentShape(.rect)` **inside** the Button's label, *after* frame+padding; placed outside the Button it decorates the wrapper and does nothing for hit-testing.
+- Never add `.onTapGesture` to a `Button`'s label — the gesture competes with the Button and swallows the click it should receive. A Button already handles clicks; it needs no gesture help. `.focusable(false)` likewise suppresses interaction. For double-click on a Button, use `.simultaneousGesture(TapGesture(count: 2))`, which doesn't consume the primary click.
 - Business logic should not live inline in `task()`, `onAppear()`, or elsewhere in `body`.
 - Drive async work tied to a view's lifetime from `.task` / `.task(id:)` — SwiftUI cancels automatically when the view leaves the view graph. Do not store a `Task` as a property and cancel by hand.
 - Each type (struct, class, enum) should be in its own Swift file.
