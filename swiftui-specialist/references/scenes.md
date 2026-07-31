@@ -14,6 +14,18 @@ Identity is determined by **view type + graph position + any `.id(value)` modifi
 - `@StateObject`'s `deinit` fires when **its node** leaves the graph — this is distinct from `@State` value release, and is the hook for class-backed teardown.
 - `ForEach` row identity follows the element `id` (see `references/foreach.md` for the stable-and-unique identity rules and the index-as-identity anti-pattern).
 
+### Re-rooting reaches container siblings; scroll position cannot self-recover
+
+MEASURED macOS 26/27. Bullets above scope identity to the modified view; a re-rooted subtree can take **container siblings** with it, and a `ScrollView` that loses its node stops honouring `scrollPosition`:
+
+- **Branch flip in one subtree re-roots a sibling.** Container relationship (`safeAreaBar` / `safeAreaInset` content over the modified view) ⇒ flipping an `if` inside the modified view replaces the bar's subtree too. Symptom: bar-hosted `ScrollView` loses its content offset when an async completion (connection finishing, load landing) flips a branch in the content below it. State lost in a view you never touched.
+- **`safeAreaBar` on macOS rebuilds bar content from a preference** — AppKit path = transform over `ContentScrollViewPreferenceKey` ⇒ re-created whenever the modified view's scroll views churn. `safeAreaInset` (`_InsetViewModifier`) stores content once; does not.
+- **`.scrollPosition(id:)` requests a scroll only on a value CHANGE** — per-node `MakeRequest.oldValue`, gated also on `hasValue`. Fresh node ⇒ first evaluation emits nothing; later ones see an unchanged value ⇒ a re-rooted `ScrollView` never re-scrolls. Corollary: **persisting the bound value makes it worse** — an equal value guarantees suppression, so resetting local `@State` can beat a hoisted `@Binding`.
+
+Diagnostic: "scrolls, then snaps back" ⇒ the request already succeeded and the node was then replaced. Hunt an async-driven branch flip in a *neighbouring* subtree; stop changing the scroll API.
+
+Fix the re-root, not the scroll view: the flipping subtree becomes branch-free. One subtree; `opacity` for visibility PLUS `.allowsHitTesting` + `.accessibilityHidden` — `opacity` gates neither. `View.hidden()` cannot serve: unconditional, no `Bool` overload ⇒ gating it reintroduces the branch (Apple's `hidden()` doc recommends `if` for conditional inclusion — the hazard itself).
+
 ## Async scoping: `.task` is primary; carve-out for work that outlives the view
 
 `.task` cancellation is the **primary** tool for view-scoped async service lifetime — SwiftUI cancels the task automatically when the view leaves the graph. Use it for anything whose lifetime should match the view.
