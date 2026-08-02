@@ -90,7 +90,7 @@ Generic container = fallback, never default. Cannot name what you searched for �
 - `TabView(selection:)`: bind an enum, not an integer or string. `Tab(_:systemImage:value:content:)` requires a non-optional `selection` binding (iOS 18+ / macOS 15+).
 - Never `animation(_ animation: Animation?)` — always a value: `.animation(.bouncy, value: score)`. Chain with `withAnimation { } completion: { withAnimation { } }`, not multiple `withAnimation` calls with delays. `@Animatable` macro over manual `animatableData`.
 
-*View factoring, invalidation boundaries, init costs, single-child `Group` anti-pattern: `references/structure.md`. `ForEach`/`List`/`Table` identity + collection performance: `references/foreach.md`.*
+*View factoring, invalidation boundaries, init costs, single-child `Group` anti-pattern: `references/structure.md`. `ForEach`/`List`/`Table` identity + collection performance: `references/foreach.md`. Building a container that takes caller-supplied content — API contract, which Apple layer to reach for, and the research method that lands on it: `references/custom-containers.md`.*
 
 ## §Data Flow
 
@@ -162,6 +162,7 @@ Generic container = fallback, never default. Cannot name what you searched for �
 Load on demand — read the file for your topic. Do **not** invoke another skill.
 
 - `references/structure.md` — separate `View` struct vs computed property / `@ViewBuilder` method, `init` cost, single-child `Group` anti-pattern, extract-for-testability; also performance.md.
+- `references/custom-containers.md` — building a container that takes caller-supplied content: the L0–L5 layer ladder (`Group` collect → data-driven `Content == ForEach<…>` → value builder → named row modifiers → `Group(subviews:)` decompose → `Layout`), pinning `Content`, `.tag` is write-only for custom containers, `Binding<V?>` vs `Binding<V>?`, why nothing fills a scroll axis, and which tool answers purpose vs mechanism vs availability.
 - `references/dataflow.md` — `@Observable`/`@State`/`@Binding`, per-property tracking, collection granularity, `.onChange` isolation, KeyPath bindings, numeric `TextField` `format:`, "stale value / didn't update" desynced `@State` mirror, SwiftData `@Query`/`modelContext`; SwiftData model layer → swiftdata-pro.
 - `references/environment.md` — `@Environment`, `EnvironmentKey`/`EnvironmentValues`, `FocusedValue`, `@Entry`, comparison perf; propagation across sheets → scenes.md.
 - `references/foreach.md` — `ForEach`/`List`/`Table`/`OutlineGroup` element identity, index-as-id and transient-id anti-patterns, identity-driven row diffing; scroll/lazy perf → performance.md.
