@@ -11,18 +11,18 @@ Review Swift and SwiftUI code for correctness, modern API usage, and adherence t
 
 ## Review process
 
-1. Check deprecated and soft-deprecated API — §API below, then invoke `agentic:swiftui-specialist` and load `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.
-1. Check view structure, modifiers, and animations — §Views below, then invoke `agentic:swiftui-specialist` and load `references/structure.md`, `references/modifiers.md`, `references/animations.md`.
-1. Validate data flow — §Data Flow below, then invoke `agentic:swiftui-specialist` and load `references/dataflow.md` + `references/foreach.md` for deep `@Observable`, `@Binding`, and collection-identity rules.
+1. Check deprecated and soft-deprecated API — §API below, then invoke `swiftui-specialist` and load `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.
+1. Check view structure, modifiers, and animations — §Views below, then invoke `swiftui-specialist` and load `references/structure.md`, `references/modifiers.md`, `references/animations.md`.
+1. Validate data flow — §Data Flow below, then invoke `swiftui-specialist` and load `references/dataflow.md` + `references/foreach.md` for deep `@Observable`, `@Binding`, and collection-identity rules.
 1. Ensure navigation is updated and performant — §Navigation.
 1. Ensure the code meets Apple's Human Interface Guidelines — §Design.
 1. Validate accessibility compliance — §Accessibility.
 1. Ensure the code runs efficiently — §Performance.
-1. Check environment values and `@Entry` usage — invoke `agentic:swiftui-specialist` and load `references/environment.md`.
-1. Validate localization — invoke `agentic:swiftui-specialist` and load `references/localization.md`.
+1. Check environment values and `@Entry` usage — invoke `swiftui-specialist` and load `references/environment.md`.
+1. Validate localization — invoke `swiftui-specialist` and load `references/localization.md`.
 1. Quick validation of Swift code — §Swift.
 1. Final code hygiene check — §Hygiene.
-1. **If the deployment target is iOS/macOS/watchOS/tvOS/visionOS 27 or later:** invoke `agentic:swiftui-whats-new-27` and load the relevant references for `@State` macro migration, `@ContentBuilder`, and SDK 27 hard-deprecations.
+1. **If the deployment target is iOS/macOS/watchOS/tvOS/visionOS 27 or later:** invoke `swiftui-specialist` and load its SDK-27-migration references for `@State` macro migration, `@ContentBuilder`, and SDK 27 hard-deprecations.
 
 If doing a partial review, load only the relevant sections and skills.
 
@@ -57,7 +57,7 @@ If doing a partial review, load only the relevant sections and skills.
 - Never use `Text` concatenation with `+`; use text interpolation instead.
 - If `ObservableObject` is required (e.g. Combine debouncer), ensure `import Combine` is present — SwiftUI no longer re-exports it.
 
-*For soft-deprecated patterns, invoke `agentic:swiftui-specialist` and load `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.*
+*For soft-deprecated patterns, invoke `swiftui-specialist` and load `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.*
 
 
 ## §Views
@@ -78,7 +78,7 @@ If doing a partial review, load only the relevant sections and skills.
 - Prefer `@Animatable` macro over manual `animatableData`.
 - When rendering to images, prefer `ImageRenderer` over `UIGraphicsImageRenderer`.
 
-*For view factoring, invalidation boundaries, init costs, and single-child `Group` anti-pattern, invoke `agentic:swiftui-specialist` and load `references/structure.md`.*
+*For view factoring, invalidation boundaries, init costs, and single-child `Group` anti-pattern, invoke `swiftui-specialist` and load `references/structure.md`.*
 *For `ForEach` / `List` / `Table` identity and collection performance, load `references/foreach.md`.*
 
 
@@ -96,7 +96,7 @@ If doing a partial review, load only the relevant sections and skills.
 - Never use `@AppStorage` inside an `@Observable` class — it will not trigger view updates.
 - macOS: use `@Environment(\.dismissWindow)` (macOS 14+) over `NSApp.keyWindow?.close()`.
 
-*For deep `@Observable` per-property tracking, collection granularity, `@Binding` KeyPath patterns, and `onChange` isolation, invoke `agentic:swiftui-specialist` and load `references/dataflow.md`.*
+*For deep `@Observable` per-property tracking, collection granularity, `@Binding` KeyPath patterns, and `onChange` isolation, invoke `swiftui-specialist` and load `references/dataflow.md`.*
 
 
 ## §Navigation
