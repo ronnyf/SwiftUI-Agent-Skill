@@ -20,6 +20,7 @@ Apple wrote the idiomatic-pattern guidance here and in `references/dataflow.md`,
 1. Navigation updated + performant — §Navigation. Scene / presentation / window state lifetime + teardown — §Scenes & Windows.
 1. Apple's Human Interface Guidelines — §Design. Accessibility — §Accessibility. Efficiency — §Performance.
 1. Environment values + `@Entry` — `references/environment.md`. Localization — `references/localization.md`.
+1. Designing the API of a reusable component you're writing — call-site complexity, overloads, defaults, compose-don't-enumerate — `references/progressive-disclosure.md`.
 1. Swift validation — §Swift. Code hygiene — §Hygiene.
 1. **Deployment target iOS/macOS/watchOS/tvOS/visionOS 27+:** `references/state-macro.md` (`@State` macro migration), `references/content-builder.md` (`@ContentBuilder` unification), `references/deprecations.md` (SDK 27 hard-deprecations).
 
@@ -163,6 +164,7 @@ Load on demand — read the file for your topic. Do **not** invoke another skill
 
 - `references/structure.md` — separate `View` struct vs computed property / `@ViewBuilder` method, `init` cost, single-child `Group` anti-pattern, extract-for-testability; also performance.md.
 - `references/custom-containers.md` — building a container that takes caller-supplied content: the L0–L5 layer ladder (`Group` collect → data-driven `Content == ForEach<…>` → value builder → named row modifiers → `Group(subviews:)` decompose → `Layout`), pinning `Content`, `.tag` is write-only for custom containers, `Binding<V?>` vs `Binding<V>?`, why nothing fills a scroll axis, and which tool answers purpose vs mechanism vs availability.
+- `references/progressive-disclosure.md` — designing the API of a component you're writing: call-site vs declaration-site perspective, the four strategies (common cases, intelligent defaults, optimise the call site, compose don't enumerate), the two overload questions, `Table`'s simplification chain, `Spacer`-over-`arrangement`-enum; WWDC22 principles, 2022-era spellings.
 - `references/dataflow.md` — `@Observable`/`@State`/`@Binding`, per-property tracking, collection granularity, `.onChange` isolation, KeyPath bindings, numeric `TextField` `format:`, "stale value / didn't update" desynced `@State` mirror, SwiftData `@Query`/`modelContext`; SwiftData model layer → swiftdata-pro.
 - `references/environment.md` — `@Environment`, `EnvironmentKey`/`EnvironmentValues`, `FocusedValue`, `@Entry`, comparison perf; propagation across sheets → scenes.md.
 - `references/foreach.md` — `ForEach`/`List`/`Table`/`OutlineGroup` element identity, index-as-id and transient-id anti-patterns, identity-driven row diffing; scroll/lazy perf → performance.md.

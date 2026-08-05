@@ -1,6 +1,6 @@
 {
   "name": "swiftui-pro",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Reviews and writes SwiftUI code — best practices, modern APIs, and the swiftui-specialist umbrella skill for idiomatic patterns, data flow, and SDK migration.",
   "author": { "name": "Paul Hudson" },
   "homepage": "https://github.com/twostraws/SwiftUI-Agent-Skill",
