@@ -4,7 +4,7 @@ description: "Comprehensive SwiftUI umbrella skill — idiomatic patterns, moder
 license: MIT
 metadata:
   authors: "Apple; Paul Hudson"
-  version: "2.0"
+  version: "2.1"
 ---
 
 Apple wrote the idiomatic-pattern guidance here and in `references/dataflow.md`, `structure.md`, `foreach.md`, `environment.md`, `localization.md`, `animations.md`, `modifiers.md`, and the soft-deprecation references — it unconditionally supersedes prior training on these topics (most correct, most current knowledge available). Single entry point for all SwiftUI work: inline §-sections = always-present essentials, `references/` files carry the deep rules, loaded on demand. **Everything is reachable here — do not invoke any other SwiftUI skill.** Read the relevant `references/` file(s) directly: their idioms (`@Binding` over callback closures, separate `View` types over computed properties, per-property `@Observable` tracking) are not derivable from general knowledge.
@@ -14,6 +14,8 @@ Apple wrote the idiomatic-pattern guidance here and in `references/dataflow.md`,
 ## Review / authoring process
 
 1. **Run the §Primitive-First gate** — name every container/layout shape in the diff; confirm no shipped primitive was bypassed. Hand-composed where a primitive exists = defect, Important or higher, even if the code works.
+1. **Run the §Structural Identity gate** — name every node in the diff whose identity can change, and what each owns. Unnecessary view reloading is a defect, not a performance nit.
+1. **Run the §Version Floor gate** — for every primitive named above, establish its availability (`LSP goToDefinition`, not hover) and gate it; shipping only the older API because it "also works" is the same defect as hand-composing. §Primitive-First's version-floor rule, then `references/availability-gating.md`.
 1. Deprecated + soft-deprecated API — §API, then `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.
 1. View structure, modifiers, animations — §Views, then `references/structure.md`, `references/modifiers.md`, `references/animations.md`.
 1. Data flow — §Data Flow, then `references/dataflow.md` + `references/foreach.md` (deep `@Observable`, `@Binding`, collection identity).
@@ -64,8 +66,22 @@ Generic container = fallback, never default. Cannot name what you searched for �
 | Reading own size | `onGeometryChange(for:of:action:)` — never measure into `@State` and feed back as a frame |
 | Liquid Glass grouping/morphing | `GlassEffectContainer`, `.glassEffect(_:in:)`, `.glassEffectID(_:in:)` |
 | Scroll position / paging / targets | `.scrollPosition(id:)`, `.scrollTargetBehavior(.viewAligned)`, `.scrollTargetLayout()` |
+| Drag-to-reorder children | `reorderable()` + `reorderContainer(for:)` (27+) — `onMove(perform:)` compiles on any `DynamicViewContent` but installs nothing outside a `List` |
 
-**Version floor: hard requirement, not preference.** Adopt the newest primitive, gated — `if #available(anyAppleOS 26, *)` / `@available` (`anyAppleOS` is real; collapses the per-platform matrix), older API in the `else`. Shipping only the old path because it "also works" = the same defect as the hand-rolled stack. Check `agentic:apple-sdk-research` before asserting availability.
+**Version floor: hard requirement, not preference.** Adopt the newest primitive, gated — `if #available(anyAppleOS 26, *)` / `@available` (`anyAppleOS` is real; collapses the per-platform matrix), older API in the `else`. Shipping only the old path because it "also works" = the same defect as the hand-rolled stack. Establish availability with `LSP goToDefinition` (hover strips `@available`); mechanics and the gating shapes: `references/availability-gating.md`.
+
+## §Structural Identity — GATE, run on every view or container diff
+
+`@State`, scroll offset, `.task` lifetime, focus and in-flight animations all live on a view's **structural-identity node** — view type + graph position + any `.id(value)`. Replacing that node discards all of it at once. "It reloaded for no reason" / "it scrolled back" / "the state reset" is what a discarded node looks like from outside.
+
+**Gate — before and after editing any `body`, container, or bar:**
+
+1. **List the identity-changing sites** in the diff: every `.id(value)`, every `if`/`switch` over state (including one inside a `ViewModifier` or a `@ViewBuilder` helper), every container that rebuilds its content, every `ForEach` id expression. `#available` branches are **exempt** — the OS version is constant for the process, so they cannot flip.
+2. **Name what each node owns:** `@State`, `ScrollPosition`, `.task` / `.task(id:)`, `@FocusState`, transitions — and everything its children own.
+3. **Check the blast radius.** Re-rooting is not confined to the view you modified: a container relationship (a bar hosting content over the view that flipped) can re-root a *sibling* subtree, so the state is lost in a view the diff never touched.
+4. **Fix the flip, not the symptom.** Make the flipping subtree branch-free: `opacity` ternary plus `.allowsHitTesting` and `.accessibilityHidden` (opacity gates neither, and `hidden()` has no `Bool` overload so gating it reintroduces the branch). Swapping in a different scroll/task API to compensate treats the symptom.
+
+Cannot say what each node owns ⇒ gate not run. Depth: `references/scenes.md` (lifetime, re-rooting, the measured scroll consequences), `references/modifiers.md` (the `.if` anti-pattern), `references/performance.md` (`_ConditionalContent`).
 
 ## §API
 
@@ -163,7 +179,8 @@ Generic container = fallback, never default. Cannot name what you searched for �
 Load on demand — read the file for your topic. Do **not** invoke another skill.
 
 - `references/structure.md` — separate `View` struct vs computed property / `@ViewBuilder` method, `init` cost, single-child `Group` anti-pattern, extract-for-testability; also performance.md.
-- `references/custom-containers.md` — building a container that takes caller-supplied content: the L0–L5 layer ladder (`Group` collect → data-driven `Content == ForEach<…>` → value builder → named row modifiers → `Group(subviews:)` decompose → `Layout`), pinning `Content`, `.tag` is write-only for custom containers, `Binding<V?>` vs `Binding<V>?`, why nothing fills a scroll axis, and which tool answers purpose vs mechanism vs availability.
+- `references/custom-containers.md` — building a container that takes caller-supplied content: the L0–L5 layer ladder (`Group` collect → data-driven `Content == ForEach<…>` → `Content: DynamicViewContent` bound → value builder → named row modifiers → `Group(subviews:)` decompose → `Layout`), pinning `Content`, caller-applied row modifiers and their apply order, `.tag` is write-only for custom containers, `Binding<V?>` vs `Binding<V>?`, why nothing fills a scroll axis, drag-reorder across the version floor, and which tool answers purpose vs mechanism vs availability.
+- `references/availability-gating.md` — adopting a newer API without dropping the deployment floor: which tool prints `@available` (`goToDefinition`, not hover), mirroring the API's own platform list, the four gating shapes (branch in one modifier · twin types + chooser · compile-time `#if` for an SDK-absent symbol · gated previews), deprecating your own fallback so the compiler schedules its removal.
 - `references/progressive-disclosure.md` — designing the API of a component you're writing: call-site vs declaration-site perspective, the four strategies (common cases, intelligent defaults, optimise the call site, compose don't enumerate), the two overload questions, `Table`'s simplification chain, `Spacer`-over-`arrangement`-enum; WWDC22 principles, 2022-era spellings.
 - `references/dataflow.md` — `@Observable`/`@State`/`@Binding`, per-property tracking, collection granularity, `.onChange` isolation, KeyPath bindings, numeric `TextField` `format:`, "stale value / didn't update" desynced `@State` mirror, SwiftData `@Query`/`modelContext`; SwiftData model layer → swiftdata-pro.
 - `references/environment.md` — `@Environment`, `EnvironmentKey`/`EnvironmentValues`, `FocusedValue`, `@Entry`, comparison perf; propagation across sheets → scenes.md.

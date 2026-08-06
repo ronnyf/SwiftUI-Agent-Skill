@@ -1,6 +1,7 @@
 # Performance
 
 - When toggling modifier values, prefer ternary expressions over if/else view branching to avoid `_ConditionalContent`, preserve structural identity, and avoid repeatedly recreating underlying platform views.
+- That branch is not only a cost. MEASURED (macOS 27): a `_ConditionalContent` inside a row's subtree **defeats the drag lift** once a container-level reorder modifier is installed, and a branch flip can re-root a *sibling* subtree and discard state the diff never touched (`scenes.md` § Re-rooting). Treat the ternary as the rule and a state-driven branch as the exception that has to be justified.
 - Avoid `AnyView` unless absolutely required. Use `@ViewBuilder`, `Group`, or generics instead.
 - If a `ScrollView` has an opaque, static, and solid background, prefer to use `scrollContentBackground(.visible)` to improve scroll-edge rendering efficiency.
 - It is more efficient to break views up by making dedicated SwiftUI views rather than place them into computed properties or methods. Using `@ViewBuilder` on a property or method does not solve this; breaking views up is strongly preferred.

@@ -12,6 +12,7 @@ research method that lands you on the right one.
 - The layer ladder — L0 to L5
 - Which tool answers which question
 - Facts per layer
+- Reordering
 - Refactoring an existing container
 - Common mistakes
 
@@ -81,6 +82,7 @@ stated price; skipping down is how imperative habits re-enter declarative code.
 |---|---|---|---|
 | **L0** | `Group { }` — collect, never decompose | fan one modifier over several views · one modifier across an `if`/`else`'s branches · relieve builder child-count | `Group` |
 | **L1** | Data-driven init pinning `Content == ForEach<Data, Data.Element.ID, RowContent>` | you hold the model collection | `List(_:selection:rowContent:)` |
+| **L1b** | Builder init bounded `Content: DynamicViewContent` — caller supplies the `ForEach`, container *reads* `content.data` | you need the collection (count, identity type) but not the row type, and row concerns can ship as caller-applied modifiers | every `DynamicViewContent` modifier: `onDelete`, `onMove`, `reorderable` |
 | **L2** | Typed element + `@resultBuilder` over **values** | children are hand-authored/heterogeneous, or one element must carry more than one view plus a value | `Tab(value:content:label:)` + `TabContentBuilder` |
 | **L3** | Named `ViewModifier` per row concern | the container wraps rows *and* pins `Content` | `ModifiedContent` |
 | **L4** | `Group(subviews:)` / `ForEach(subviews:)` / `ContainerValues` | the only input is an opaque builder block, and placement is positional or driven by child-written values | `Group(subviews:transform:)` |
@@ -115,8 +117,10 @@ this for." Reading a one-line abstract and proceeding as though the doc was read
 measured failure mode: it is how `Group`'s three documented purposes get missed entirely.
 Use it for availability, never for purpose.
 
-`LSP hover` strips `@available`, and `DocumentationSearch` carries no availability metadata —
-so neither tool's silence is evidence a symbol is unrestricted.
+`LSP hover` strips `@available` and `DocumentationSearch` carries no availability metadata — so
+neither tool's silence is evidence a symbol is unrestricted. `LSP goToDefinition` does print it:
+it lands in the generated `.swiftinterface`, where the attributes sit above the declaration.
+Adopting a version-gated container primitive: `availability-gating.md`.
 
 ## Facts per layer
 
@@ -153,6 +157,43 @@ Either way `Data` is the **model** collection, `Data.Element: Identifiable` is a
 element, and `ForEach` owns identity, laziness and diffing. Add
 `Data.Element.ID == SelectionValue` when the container selects, mirroring `List`'s
 selection-aware inits.
+
+**L1b — bound `Content: DynamicViewContent` when the container needs the *data*, not the rows.**
+
+`DynamicViewContent` refines `View` with a single requirement: `var data: Self.Data { get }`, where
+`Data` is a `Collection`. Bounding a builder init's result to that protocol — plus
+`Content.Data.Element: Identifiable`, and `Content.Data.Element.ID == SelectionValue` where the
+container selects — buys read access to the caller's collection while the caller keeps the
+`ForEach`. Element count for width distribution, the identity type for selection, and the whole
+`DynamicViewContent` modifier family become reachable without pinning `Content`.
+
+Consequences, in the order they bite:
+
+- **`data` is get-only, so the container can never be the mutation site.** Reorder, delete and
+  insert must be handed *out* — as a difference, an `IndexSet`, an offset — to whatever owns the
+  collection. A container that wants to mutate the caller's array is at the wrong layer, or wants
+  L1's data-driven init instead.
+- **No `Content ==` pin, so L3's nameable-wrapper cascade never starts.** This is the layer to try
+  when a builder init is genuinely wanted *and* the row-wrapper types are turning into a
+  combinatorial signature. L5 is unaffected: the container still owns its `Layout`.
+- **Row concerns become caller-applied modifiers**, because the container holds pre-built content
+  and cannot wrap rows without renaming their type. Ship them as named `ViewModifier`s named for
+  the *concern* — layout, choice, drag — one per concern.
+- **Apply order is part of the contract, not a style preference.** A hit-test shape has to land
+  inside the `Button` a selection modifier introduces; a drop target has to cover the widened frame
+  rather than the label. Both orderings fail silently when wrong, so state the order on the
+  modifier that must come second, naming the one it follows.
+- **A call site can omit a modifier and get an inert row, with no diagnostic.** A row carrying only
+  a label compiles, lays out, and does nothing: no selection, no width floor. That is this layer's
+  real price, and it is paid at every call site instead of once in the type. Mitigate with a
+  `#Preview` of the *omitted-modifier* call site — so the failure has a reference rendering — and by
+  keeping the modifier set small enough to state in one line.
+
+Choosing between them: **L1** when the container should own the row's whole appearance and callers
+never compose per-row behaviour; **L1b** when callers must attach behaviour the container cannot
+generalise (a per-row drag source below a version floor, a per-row context menu, per-row gestures),
+or when two different row types must coexist in one container — which L1's single `RowContent`
+cannot express.
 
 **L1/L3 — `.tag()` writes an association nothing public can read.** `Picker` and `TabView`
 read tags through private machinery. A custom container must wire selection explicitly — the
@@ -206,8 +247,10 @@ factoring anyway. Named wrappers cannot be `private`: they appear in the public 
 init forced `Content` to be nameable; L5 exists because siblings must share an offered width.
 Needing both means you are paying for the builder init in row-wrapper types *and* still not
 getting the geometry from them — drop the builder, fall back to L1, and the named wrappers
-collapse with it. Re-run this check after each concern lands, not once at the start: the layer was
-chosen before you knew the full concern list.
+collapse with it. The other exit is L1b: keep the builder, bind `Content: DynamicViewContent`, and
+the container still reads the element count its `Layout` needs while the wrappers move to the call
+site and the pin disappears. Re-run this check after each concern lands, not once at the start: the
+layer was chosen before you knew the full concern list.
 
 Watch for the inverse tell. Once row concerns are factored into per-row modifiers, every row
 sizes itself and a plain `HStack`/`LazyHStack` starts to look sufficient — so the *absence* of
@@ -244,9 +287,68 @@ guard let offered = proposal.width, offered.isFinite else {
 }
 ```
 
+The injected proposal is where the element count earns its keep: proposing
+`max(offered, count × floor)` — one `containerRelativeFrame` closure reads both — makes the row fill
+the container while there is room and report *true overflow* past the floor, which is the only thing
+an enclosing `ScrollView` can scroll to. **Placed width must equal reported width.** Clamping
+children up to a floor while reporting only what was offered puts the tail outside the bounds:
+drawn, unreachable, and observable as rubber-banding rather than scrolling.
+
 This is a *proposal* property, not a laziness property — it applies to `HStack` and
 `LazyHStack` alike. Laziness costs something different and independent: off-screen children
 are neither accessibility elements nor drop targets.
+
+## Reordering
+
+Drag-to-reorder is the concern that most often reveals the container is at the wrong layer, because
+the mechanism differs by version *and* by whether the container can reach its rows.
+
+**`onMove(perform:)` installs nothing outside a `List`.** It is declared on `DynamicViewContent`
+(macOS 10.15+), so it compiles on a `ForEach` inside a stack, a grid, or a custom layout — and does
+nothing there. No lift, no drag, no diagnostic. It writes the `List` reorder trait, and nothing else
+consumes it; Apple scopes it twice, in *Making a view into a drag source* ("**Within a `List`**, you
+can use the `onMove(perform:)` modifier to enable reordering") and in `EnvironmentValues.editMode`,
+which describes the affordance as belonging to "a `List` with a `ForEach`". A compiling `onMove` on
+anything else is the single most convincing dead end in this area.
+
+**The container-level mechanism (27+)** is a pair: `reorderable()` on the `DynamicViewContent`, and
+`reorderContainer(for:isEnabled:move:)` on the enclosing stack, grid, or custom layout. The item
+type must be `Identifiable` with a `Sendable` ID. The `move` closure receives a difference carrying
+the source item IDs, in the order the person selected them, plus a destination position expressed as
+*before a given item ID* or *at the end*.
+
+Applying that difference:
+
+- **The destination is in the original index space**, so a straight application needs no off-by-one
+  correction. `Array.move(fromOffsets:toOffset:)` is the opposite: it uses the *pre-removal*
+  convention and needs `+1` when moving an element later in the collection. Two conventions, two
+  translations, and a wrong offset is wrong in one direction only — so test both directions of every
+  translation you write, never just one.
+- **Apply by ID, not by index.** Keying the collection into an ordered dictionary by element ID turns
+  the whole difference into one move-keys call and writes back in order; index arithmetic over a
+  multi-source difference is where the fudge factors come from.
+- **The container is not the mutation site** when content is bound rather than pinned (L1b): pass the
+  difference out to the collection's owner.
+
+**Below the container-level floor there is no equivalent**, so the fallback is per-row: a drag source
+plus a drop target on each row. A container holding pre-built content cannot attach those, so they
+become a caller-applied row modifier — which is exactly why the pre-floor twin *drops* the reorder
+parameter instead of faking it (`availability-gating.md` § shape 2). Per-row translation is a
+hit-test ("dropped item onto this row"), not an index difference; it needs its own test.
+
+Measured hazards, all silent (macOS 27, `26A5399e`):
+
+- **A state-driven `if` in a row's subtree breaks the lift.** Once the reorderable modifier is
+  installed, a `_ConditionalContent` in the row defeats the drag gesture. Every row-level toggle —
+  selection chrome, badges, an underline — becomes an `opacity` ternary. Run the structural-identity
+  analysis on the row before adding any conditional (`scenes.md`, `performance.md`).
+- **A glass effect anywhere in a reorderable item's ancestor chain renders the drag preview empty.**
+  Reproduced in Apple's own documented shape, so it is not fixable by re-composing the call site; use
+  a material until the platform fixes it.
+- **The default drag preview is the row's snapshot**, so a row that fills the container's width drags
+  at full width. Supply an explicit preview for anything wider than its content.
+- **A reorder can re-anchor the scroll view mid-drag.** Pin the scroll anchor to the dragged item for
+  the drag's duration (drag-session updates, 26+, itself gated).
 
 ## Refactoring an existing container
 
@@ -293,3 +395,8 @@ refactor that loses the invariant is usually done by someone who has read the co
 | Carrying an `INVARIANT:` comment onto a rewritten type | The comment travels, the mechanism doesn't. Comment-right/code-wrong reads as verified. Re-verify against the original implementation |
 | Row wrappers (L3) but no `Layout` (L5) | Self-sizing rows hide the missing width distribution at the call site. Needing both layers means the builder init isn't paying for itself |
 | `accessibilityRepresentation { Picker(selection: $selection) { label.tag(0) } }` | The stand-in must not share the real binding. Per-item, one tag, `.constant(isSelected ? …)` — a literal tag against a generic `Value?` matches nothing and never diagnoses |
+| `onMove(perform:)` on a `ForEach` outside a `List` | Compiles, installs nothing, warns about nothing. Container-level reorder is the 27+ `reorderable()` + `reorderContainer(for:)` pair; below that floor it is per-row drag + drop |
+| Expecting a container bounded to `DynamicViewContent` to mutate the collection | `data` is get-only. Hand the difference, `IndexSet` or offset out to whatever owns the collection |
+| Shipping caller-applied row modifiers with no omitted-modifier preview | An inert row compiles and renders. That preview is the only reference for the failure mode the layer introduces |
+| A state-driven conditional inside a reorderable row | `_ConditionalContent` defeats the drag lift. Ternary the value; never branch the view |
+| Reporting the offered width while placing children wider | Placed must equal reported. Otherwise the tail is drawn outside the bounds, unreachable, and reads as rubber-banding |

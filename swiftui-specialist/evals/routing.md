@@ -573,16 +573,39 @@ Reasoning: Compiler-warning deprecations at SDK 27.0 are hard-deprecated (deprec
 
 ---
 
+### V-availability-gating
+
+**V-AG1 (positive):**
+Phrase: "the reorder modifier I need is macOS 27 only and my app targets macOS 15 — how do I ship both?"
+Expected: `availability-gating`
+
+**V-AG2 (positive):**
+Phrase: "LSP hover didn't show any @available on this symbol — is it unrestricted?"
+Expected: `availability-gating`
+Reasoning: Which tool prints the attribute is availability-gating.md's first section.
+
+**V-AG3 (negative):**
+Phrase: "the reorder modifier I need is macOS 27 only and my app targets macOS 15 — how do I ship both?"
+Expected: NOT `soft-deprecation`
+Reasoning: Gating a *newer* API is not identifying a soft-deprecated one; soft-deprecation.md is about Apple's `deprecated: 100000.0` sentinel.
+
+**V-AG4 (negative):**
+Phrase: "should my custom tab bar own the selected pane or just the selector?"
+Expected: NOT `availability-gating`
+Reasoning: Container ownership is custom-containers.md § Step 0.
+
+---
+
 ## Case count summary
 
 | Section | Positives | Negatives | Total |
 |---------|-----------|-----------|-------|
 | Training | 41 | 20 | 61 |
-| Validation (held-out) | 19 | 12 | 31 |
-| **Total** | **60** | **32** | **92** |
+| Validation (held-out) | 21 | 14 | 35 |
+| **Total** | **62** | **34** | **96** |
 
-Held-out fraction: 31/92 ≈ 34% (target ≈ ⅓; within acceptable 33–40% range).
+Held-out fraction: 35/96 ≈ 36% (target ≈ ⅓; within acceptable 33–40% range).
 
-Negative fraction: Training 20/61 ≈ 32.8%; Validation 12/31 ≈ 38.7% (gap ≈ 6pp; within ~5pp target).
+Negative fraction: Training 20/61 ≈ 32.8%; Validation 14/35 = 40% (gap ≈ 7pp; slightly above the ~5pp target — the availability-gating block is negative-heavy by design, both negatives guarding the two nearest neighbours).
 
 All 16 surviving topics are covered in both sections.

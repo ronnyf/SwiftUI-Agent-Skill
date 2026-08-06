@@ -23,6 +23,14 @@ Everything in this document applies to any SwiftUI API that takes a `RandomAcces
 
 Whenever you see one of these taking a collection directly, read "id per element" the same way you would for `ForEach`: stable, unique, and independent of position or mutable content.
 
+## Reordering is a `List` trait, not a `ForEach` one
+
+`onMove(perform:)` and `onDelete(perform:)` are declared on `DynamicViewContent` — the protocol `ForEach` conforms to — so they compile on a `ForEach` anywhere: a stack, a grid, a custom layout. Only `List` reads the move trait. Outside one, `onMove` installs no drag machinery at all: no lift, no drag, no diagnostic.
+
+Container-level reordering outside a `List` is `reorderable()` on the content plus `reorderContainer(for:)` on the container (27+); below that floor it is per-row drag source + drop target. The mechanism, the index-space conventions when applying a reorder difference, and the measured hazards (a conditional in a row defeats the lift) are in `custom-containers.md` § Reordering; gating the two paths is `availability-gating.md`.
+
+Identity still does the work in both cases: the difference is expressed in **element ids**, so the same stable-and-unique rule below is what makes a reorder apply to the right elements.
+
 ## Avoid collection indices as identity
 
 Using a collection's indices, or `.self` on an index, as the identifier is the most common anti-pattern. Indices describe a position, not an element. As soon as the collection is reordered, inserted into, or filtered, the same index now refers to a different element - and SwiftUI has no way to tell.
