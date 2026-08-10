@@ -1,0 +1,13 @@
+{
+  "name": "swiftui-specialist",
+  "version": "2.4.0",
+  "description": "Comprehensive SwiftUI umbrella skill — idiomatic patterns, modern API, data flow, view structure, performance, accessibility, localization, and SDK 27 migration.",
+  "author": { "name": "Apple; Paul Hudson" },
+  "homepage": "https://github.com/ronnyf/SwiftUI-Agent-Skill",
+  "repository": "https://github.com/ronnyf/SwiftUI-Agent-Skill",
+  "license": "MIT",
+  "keywords": ["swiftui", "swift", "ios", "apple", "data-flow", "state-management"],
+  "skills": [
+    "./"
+  ]
+}
