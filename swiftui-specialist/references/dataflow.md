@@ -762,6 +762,15 @@ struct ItemList: View {
 
 **The writer must sit inside the iteration.** `ForEach`/`List` are what hand you the element binding. Code *outside* the loop that wants one has to find the element by index or by scanning — treat that as the signal that either the writer belongs inside the iteration or the data belongs elsewhere. That is the design question; the projection is not.
 
+**Don't reconstruct the binding by iterating indices.** The pre-2021 workaround — `ForEach(items.indices, id: \.self) { i in TextField("", text: $items[i].note) }` — compiles and is explicitly not recommended (WWDC21, *What's new in SwiftUI*). It carries two independent costs:
+
+- **Whole-collection dependency.** Forming `$items[i]` inside the row closure requires reading `items`, so *every* row depends on the entire collection and one element changing invalidates all of them. This is the "SwiftUI will be forced to reload the entire list when anything changes" cost, and it is the one that scales with list length.
+- **Position-as-identity.** `id: \.self` on an index names a position, so an insert or move re-points every id from that point on. See "Avoid collection indices as identity" in `foreach.md`.
+
+`ForEach($items)` avoids both. Its signature is `init<C>(_ data: Binding<C>, content: @escaping (Binding<C.Element>) -> Content) where Data == LazyMapSequence<C.Indices, (C.Index, ID)>, ID == C.Element.ID` — identity comes from the **element's own `ID`**, while the index is used internally, at row-construction time, purely to vend the binding. The index never becomes the identity and never enters the row's dependency set.
+
+This is also why a custom container that wants to hand rows element bindings belongs at L1 (own the collection, build `ForEach($data)` internally) rather than L1b (`Content: DynamicViewContent`): the binding-based `ForEach` reports `Data.Element` as the tuple `(C.Index, ID)`, so an L1b container constrained on `Content.Data.Element == SelectionValue` cannot consume it. See `custom-containers.md` § L1.
+
 **Element bindings are index-backed.** `Binding<Value>.Index == Value.Index`, so a binding retained across a removal writes through a stale index and traps with `Index out of range`. A synchronous user-driven write inside a row is safe; a binding captured by an async sink that can outlive its element is not.
 
 # `@Entry` macro
