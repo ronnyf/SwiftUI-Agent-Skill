@@ -116,6 +116,7 @@ Cannot say what each node owns ⇒ gate not run. Depth: `references/scenes.md` (
 - "Stale value / didn't update" bugs are almost always state-consistency problems — an `@State` mirror drifted from source of truth. Fix by removing the desyncable mirror, not by swapping `.task(id:)` and `.onChange`.
 - `@State` is `private`, owned by the view that created it. Never `@AppStorage` inside an `@Observable` class — it will not trigger view updates.
 - Child both reads and writes parent state ⇒ pass `@Binding`, not an `onChange`/callback closure (closures are for one-shot actions with no parent state to mutate). `$`-prefixed projected bindings over inline `Binding(get:set:)` in a body.
+- Child mutates one element of a collection ⇒ `ForEach($items) { $item in }` / `List($items)` — `Binding` is itself a collection whose elements are element bindings. Never build a keyed side-store to get a two-way handle the framework already vends.
 - Numeric `TextField`: bind `Int`/`Double` via the `format:` initializer + `.keyboardType(.numberPad)` / `.keyboardType(.decimalPad)`. `Identifiable` conformance over `id: \.someProperty`.
 - macOS: `@Environment(\.dismissWindow)` (macOS 14+) over `NSApp.keyWindow?.close()`.
 

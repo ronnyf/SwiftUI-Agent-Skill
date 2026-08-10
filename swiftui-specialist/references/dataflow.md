@@ -725,6 +725,45 @@ struct ScoreboardView: View {
 }
 ```
 
+### Reach for the collection binding before writing a projection
+
+`Binding` conditionally conforms to `Sequence`, `Collection`, `BidirectionalCollection` and `RandomAccessCollection` when `Value` does, with `Element == Binding<Value.Element>` (iOS 15 / macOS 12; verified in SDK 27's `SwiftUI.swiftinterface`). A `Binding<[Item]>` *is* a collection of element bindings, so `ForEach($items) { $item in … }` and `List($items) { $item in … }` hand each row a two-way handle into the live array element — Apple's "interactive collections".
+
+This composes with the KeyPath rule above rather than competing with it: reach for the element binding first; add a labelled subscript only when the value genuinely is not a collection element.
+
+```swift
+// AVOID: a keyed side-store plus a custom subscript, to recover a two-way handle the
+// framework already vends. Two collections nothing keeps in step — every removal path
+// must remember to evict, and one that forgets leaks silently.
+@Observable @MainActor
+final class ItemsModel {
+    var items: [Item] = []
+    var notes: [Item.ID: String] = [:]
+
+    subscript(noteFor id: Item.ID) -> String {
+        get { notes[id] ?? "" }
+        set { notes[id] = newValue }
+    }
+}
+```
+
+```swift
+// PREFER: the element binding. One store; the write lands on the live element.
+struct ItemList: View {
+    @Binding var items: [Item]
+
+    var body: some View {
+        List($items) { $item in
+            TextField("Note", text: $item.note)
+        }
+    }
+}
+```
+
+**The writer must sit inside the iteration.** `ForEach`/`List` are what hand you the element binding. Code *outside* the loop that wants one has to find the element by index or by scanning — treat that as the signal that either the writer belongs inside the iteration or the data belongs elsewhere. That is the design question; the projection is not.
+
+**Element bindings are index-backed.** `Binding<Value>.Index == Value.Index`, so a binding retained across a removal writes through a stale index and traps with `Index out of range`. A synchronous user-driven write inside a row is safe; a binding captured by an async sink that can outlive its element is not.
+
 # `@Entry` macro
 
 When defining custom environment, transaction, container, or focused values, always prefer to use `@Entry` to reduce boilerplate code and avoid mistakes.
