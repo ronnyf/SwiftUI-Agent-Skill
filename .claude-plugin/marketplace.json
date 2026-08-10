@@ -9,7 +9,7 @@
     {
       "name": "swiftui-pro",
       "source": "./",
-      "description": "Reviews and writes SwiftUI code — best practices, modern APIs, and the swiftui-specialist umbrella skill for idiomatic patterns, data flow, and SDK migration.",
+      "description": "Reviews and writes SwiftUI code — best practices, modern APIs, and correctness checks. Invokes the swiftui-specialist:swiftui-specialist plugin for idiomatic patterns, data flow, and SDK migration depth.",
       "version": "2.3.1",
       "author": { "name": "Paul Hudson" },
       "homepage": "https://github.com/twostraws/SwiftUI-Agent-Skill",
