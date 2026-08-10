@@ -54,7 +54,7 @@ If doing a partial review, load only the relevant sections and skills.
 - When targeting iOS 26+, use the native `WebView` (requires `import WebKit`) instead of hand-wrapped `WKWebView`.
 - `ForEach` over an `enumerated()` sequence: use `ForEach(items.enumerated(), id: \.element.id)` directly, do not convert to an array first.
 - Use `.scrollIndicators(.hidden)` not `showsIndicators: false`.
-- Never use `Text` concatenation with `+`; use text interpolation instead.
+- Styled runs via `+` or interpolation both preserve per-run styling — e.g. `Text("Hello \(Text("World").bold())")`.
 - If `ObservableObject` is required (e.g. Combine debouncer), ensure `import Combine` is present — SwiftUI no longer re-exports it.
 
 *For soft-deprecated patterns, invoke `swiftui-specialist:swiftui-specialist` and load `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.*
