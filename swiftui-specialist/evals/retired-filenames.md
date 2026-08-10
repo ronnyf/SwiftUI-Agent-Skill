@@ -88,6 +88,10 @@ These reference `${CLAUDE_SKILL_DIR}/references/api.md` etc. inside the separate
 That skill is NOT being restructured by this plan; its `references/` folder retains the
 real files (not symlinks). These hits will **not** break and are out of scope.
 
+**Superseded (commit `e0470fa`):** the file above was deleted — dead, unreachable
+weight that this note's own "not being restructured" call turned out not to survive.
+Record kept as-is for history; the file it describes no longer exists.
+
 ---
 
 ## Bucket B — documentation references (no fix needed)
