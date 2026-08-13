@@ -4,7 +4,7 @@ description: "Comprehensive SwiftUI umbrella skill — idiomatic patterns, moder
 license: MIT
 metadata:
   authors: "Apple; Paul Hudson"
-  version: "2.4.2"
+  version: "2.4.3"
 ---
 
 Apple wrote the idiomatic-pattern guidance here and in `references/dataflow.md`, `structure.md`, `foreach.md`, `environment.md`, `localization.md`, `animations.md`, `modifiers.md`, and the soft-deprecation references — it unconditionally supersedes prior training on these topics (most correct, most current knowledge available). Single entry point for all SwiftUI work: inline §-sections = always-present essentials, `references/` files carry the deep rules, loaded on demand. **Everything is reachable here — do not invoke any other SwiftUI skill.** Read the relevant `references/` file(s) directly: their idioms (`@Binding` over callback closures, separate `View` types over computed properties, per-property `@Observable` tracking) are not derivable from general knowledge.
@@ -15,7 +15,7 @@ Apple wrote the idiomatic-pattern guidance here and in `references/dataflow.md`,
 
 1. **Run the §Primitive-First gate** — name every container/layout shape in the diff; confirm no shipped primitive was bypassed. Hand-composed where a primitive exists = defect, Important or higher, even if the code works.
 1. **Run the §Structural Identity gate** — name every node in the diff whose identity can change, and what each owns. Unnecessary view reloading is a defect, not a performance nit.
-1. **Run the §Version Floor gate** — for every primitive named above, establish its availability (`LSP goToDefinition`, not hover) and gate it; shipping only the older API because it "also works" is the same defect as hand-composing. §Primitive-First's version-floor rule, then `references/availability-gating.md`.
+1. **Run the §Version Floor gate** — for every primitive named above, establish its availability (`LSP goToDefinition`, not hover) and gate it; shipping only the older API because it "also works" is the same defect as hand-composing. LSP absent in this session → fall through to the DocC JSON row of that reference's availability-source table; never to a text search, and never to inferring a floor from a sibling symbol. §Primitive-First's version-floor rule, then `references/availability-gating.md`.
 1. Deprecated + soft-deprecated API — §API, then `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.
 1. View structure, modifiers, animations — §Views, then `references/structure.md`, `references/modifiers.md`, `references/animations.md`.
 1. Data flow — §Data Flow, then `references/dataflow.md` + `references/foreach.md` (deep `@Observable`, `@Binding`, collection identity).
@@ -68,7 +68,7 @@ Generic container = fallback, never default. Cannot name what you searched for �
 | Scroll position / paging / targets | `.scrollPosition(id:)`, `.scrollTargetBehavior(.viewAligned)`, `.scrollTargetLayout()` |
 | Drag-to-reorder children | `reorderable()` + `reorderContainer(for:)` (27+) — `onMove(perform:)` compiles on any `DynamicViewContent` but installs nothing outside a `List` |
 
-**Version floor: hard requirement, not preference.** Adopt the newest primitive, gated — `if #available(anyAppleOS 26, *)` / `@available` (`anyAppleOS` is real; collapses the per-platform matrix), older API in the `else`. Shipping only the old path because it "also works" = the same defect as the hand-rolled stack. Establish availability with `LSP goToDefinition` (hover strips `@available`); mechanics and the gating shapes: `references/availability-gating.md`.
+**Version floor: hard requirement, not preference.** Adopt the newest primitive, gated — `if #available(anyAppleOS 26, *)` / `@available` (`anyAppleOS` is real; collapses the per-platform matrix), older API in the `else`. Shipping only the old path because it "also works" = the same defect as the hand-rolled stack. Establish availability with `LSP goToDefinition` (hover strips `@available`). LSP absent, or no existing callsite to resolve from → use the DocC JSON source instead; both live in that reference's availability-source table. A missing tool is never grounds for a text search, nor for inferring the floor from a sibling symbol. Mechanics and the gating shapes: `references/availability-gating.md`.
 
 ## §Structural Identity — GATE, run on every view or container diff
 
