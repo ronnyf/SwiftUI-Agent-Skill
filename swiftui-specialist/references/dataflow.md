@@ -826,6 +826,8 @@ struct ItemsView: View {
 
 **Carry the model's own token, not an id, when the model ops take one.** If the model exposes `rename(_ item: Item)` rather than `rename(id:)`, put `Item` in the request payload — otherwise the container has to re-derive the element with a `{ $0.id == id }` scan, which is exactly what identity-keyed model APIs exist to prevent.
 
+**A request value is also how a newer-OS type stops going viral.** If the intent originates from an API above your deployment floor, the request is the version-free vocabulary both paths speak: gate only the conversion into it, never the views that carry it. `availability-gating.md` § 5.
+
 ### More than one non-ViewBuilder closure parameter means you have written a delegate
 
 The "Use KeyPath bindings, not closure bindings" entry above rejects closures for *producing bindings*, on allocation and comparison grounds. The same reasoning extends to closures as *callback parameters*, and the smell is countable:

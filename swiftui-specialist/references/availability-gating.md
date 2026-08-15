@@ -46,7 +46,7 @@ Deployment target and SDK are independent axes: building against a newer SDK wit
 compiles gated code fine — the gate is what keeps it from *running* there. A symbol missing from
 the selected SDK is a different problem; `#available` cannot fix it (shape 3).
 
-## The four gating shapes
+## The five gating shapes
 
 Pick by **what differs between the two paths**.
 
@@ -106,6 +106,42 @@ implementation whose API predates the split, say) the preview demonstrates the *
 second mechanism, and it is the only place the gated branch is ever seen. Neither the build nor the
 newer-OS preview exercises the `else`.
 
+### 5. Version-free value plus a gated conversion `init` — the newer *type* would go viral
+
+Shapes 1–4 all key on *what differs between the two paths*. This one keys on something else: **`@available` is viral through stored properties.** A newer-OS framework *type* held as a stored member forces that annotation onto your type, then onto every view storing your type, then onto their `@State` / `@Binding` — until the cascade collides with the deployment floor. Branching cannot help, because the question is not which code runs but what can be *stored*.
+
+Declare your own **version-free value** both paths can speak, and put the conversion in an `@available` extension on **your** type:
+
+```swift
+// Ungated — stored by views at the deployment floor.
+private struct ReorderContext: Equatable {
+    enum Destination: Equatable { case before(Item.ID), end, onto(Item.ID) }
+    var sources: [Item.ID]
+    var destination: Destination
+}
+
+@available(iOS 27.0, macOS 27.0, *)
+extension ReorderContext {
+    /// Gated HERE so no ungated view names a 27-only type. `.onto` is unreachable from a
+    /// difference — the exhaustive switch turns a future `Position` case into a compile error
+    /// rather than a silent fallthrough.
+    init(reorderDifference difference: ReorderDifference<Item.ID, ReorderableSingleCollectionIdentifier>) {
+        switch difference.destination.position {
+        case .before(let id): self.init(sources: difference.sources, destination: .before(id))
+        case .end:            self.init(sources: difference.sources, destination: .end)
+        }
+    }
+}
+```
+
+The gate then exists at exactly one point, nothing downstream carries an annotation, and inside an `if #available` block the call site is one line: `request = .init(reorderDifference: difference)`.
+
+**Put it on your type, not as a projection on theirs.** A computed property on the framework type (`var context: ReorderContext`) looks equivalent and is not: that extension is generic over the framework type's *own* parameters, so returning your concrete value needs an extra `where` constraint — which narrows the extension for every other member declared on it, including ones used generically elsewhere. Extending your own type has no such coupling.
+
+**A `where` clause cannot constrain a non-generic type.** `init(_ d: ReorderDifference) where CollectionID == …` fails twice over: the framework type needs its generic arguments spelled, and there is no `CollectionID` in scope to constrain because your type declares no generic parameters. Spell the concrete arguments in the parameter type instead.
+
+The pairing to reach for is `dataflow.md` § "A `Binding` is also an upward intent channel" — a version-free request value is exactly what an ungated container can carry, which is what makes the two patterns compose.
+
 ## Deprecate your own fallback
 
 Mark the twin `@available(<platform>, deprecated: <version where the new API landed>, message:)` —
@@ -151,3 +187,5 @@ divergence between the paths stays invisible until someone runs the older OS.
 | Both availability branches restating the whole subtree | Duplicate the spelling, not the concern. Parameterise one function by what differs |
 | No preview for the `else` branch | Nothing else exercises it. Preview it even when it "should be identical" — that is what the preview proves |
 | Treating an `#available` branch as a structural-identity hazard | It cannot flip at runtime. The hazard is the state-driven branch, not this one |
+| Storing a newer-OS framework type on a type your ungated views hold | `@available` is viral through stored properties — your type, its views, their `@State`/`@Binding`, all annotated, then the floor breaks. Shape 5: version-free value + gated conversion `init` |
+| `where CollectionID == …` on an `init` in an extension of a non-generic type | Nothing to constrain — your type declares no generic parameters, and the framework type still needs its arguments spelled. Concrete parameter type, no `where` |
