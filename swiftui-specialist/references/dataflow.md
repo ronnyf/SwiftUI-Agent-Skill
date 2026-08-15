@@ -773,6 +773,72 @@ This is also why a custom container that wants to hand rows element bindings bel
 
 **Element bindings are index-backed.** `Binding<Value>.Index == Value.Index`, so a binding retained across a removal writes through a stale index and traps with `Index out of range`. A synchronous user-driven write inside a row is safe; a binding captured by an async sink that can outlive its element is not.
 
+### A Binding is also an upward intent channel, not only a handle on data
+
+Every entry above treats `Binding` as a two-way handle to data that *already exists*. It is also the idiomatic channel for the opposite question — **a child needs to cause a mutation it is not allowed to perform**. The child gets a `Binding` to a *request value*, writes it, and the container that owns the model applies it. Data down, intent up.
+
+Reach for this whenever a child needs to reorder, delete, rename, or command something owned by the parent's model. The alternatives are worse: a model reference in the child couples presentation to a view model, and callback parameters make the child a delegate (see the next entry).
+
+```swift
+// The request the child WRITES. A plain value — version-free, testable, Equatable so
+// `.task(id:)` can key on it. It names an intent, not a mechanism.
+private struct ReorderContext: Equatable {
+    enum Destination: Equatable { case before(Item.ID), end, onto(Item.ID) }
+    var sources: [Item.ID]
+    var destination: Destination
+}
+
+// Child: no model, no callbacks. It mutates state and stops caring.
+private struct ItemStrip: View {
+    let data: [Item]
+    @Binding var reorder: ReorderContext?
+
+    var body: some View {
+        ForEach(data) { item in
+            row(item).onDrop { dragged in
+                reorder = .init(sources: [dragged.id], destination: .onto(item.id))
+            }
+        }
+    }
+}
+
+// Container: owns the model, applies the request, CONSUMES it.
+struct ItemsView: View {
+    @State private var model = ItemsModel()
+    @State private var reorder: ReorderContext?
+
+    var body: some View {
+        ItemStrip(data: model.items, reorder: $reorder)
+            .task(id: reorder) { applyReorder() }
+    }
+
+    private func applyReorder() {
+        guard let request = reorder else { return }
+        reorder = nil                       // consume — see below
+        switch request.destination { /* → narrow model ops */ }
+    }
+}
+```
+
+**Consume is load-bearing, not tidiness.** `nil → value → nil` is what makes a *repeated identical* request re-fire. Leave the value in place and the second identical drag writes the same value, which is not an Observation change, so `.task(id:)` never runs again and the feature goes silently dead. This is the same failure as a one-shot `Bool` that is never reset — the request pattern is safe *because* it is consumed. Prefer `.task(id:)` over `.onChange(of:)` here: the task also re-fires on node creation, so a re-rooted subtree re-applies rather than sitting on an unconsumed request.
+
+**Cost to know:** the apply lands one update pass after the write, where a callback would have mutated synchronously. For a drop or a menu command that is imperceptible; for something driving a continuous gesture, measure before choosing it.
+
+**Carry the model's own token, not an id, when the model ops take one.** If the model exposes `rename(_ item: Item)` rather than `rename(id:)`, put `Item` in the request payload — otherwise the container has to re-derive the element with a `{ $0.id == id }` scan, which is exactly what identity-keyed model APIs exist to prevent.
+
+### More than one non-ViewBuilder closure parameter means you have written a delegate
+
+The "Use KeyPath bindings, not closure bindings" entry above rejects closures for *producing bindings*, on allocation and comparison grounds. The same reasoning extends to closures as *callback parameters*, and the smell is countable:
+
+> A view with one `@ViewBuilder` closure is a container. A view with several non-`@ViewBuilder` closures — `onMove`, `onDrop`, `onSelect`, `menu` — is a UIKit delegate wearing a `View` conformance. Invert each one to a `Binding` on a request value.
+
+Two independent costs:
+
+- **It defeats value comparison.** Closures cannot be compared, so a view storing one can never be proven unchanged and its `body` re-evaluates on every ancestor update. That is sometimes load-bearing by accident — a stale-label bug that "fixes itself" when you add a closure parameter was fixed by uncomparability, not by design. Know which one you are relying on.
+- **It scales badly.** Each new interaction adds a parameter, and the container's call site accumulates a wall of trailing closures. Request values compose instead: one more `case` on an existing enum.
+
+`onDelete` / `onMove` on `DynamicViewContent` are not counter-examples — they are framework-owned modifiers on an existing container, not parameters you declared.
+
 # `@Entry` macro
 
 When defining custom environment, transaction, container, or focused values, always prefer to use `@Entry` to reduce boilerplate code and avoid mistakes.

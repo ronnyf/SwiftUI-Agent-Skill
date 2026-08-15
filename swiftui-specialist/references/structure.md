@@ -313,6 +313,9 @@ Group {
 
 ## Practical composition rules
 
+- **Generic parameters obey the callsite count.** Before adding a type parameter to a view, count the call sites that would instantiate it with a *different* type. One (a `#Preview` doesn't count as a second) means the generic buys nothing — use the concrete type. `<Row, Label, Content>` on a view with a single caller is three parameters of ceremony, and each one propagates into every `where` clause and every nested type it is handed to. Genericize only over what actually varies across call sites; a container published for reuse is the case that earns it, a private view in the same file is not.
+  - Corollary: a generic parameter also becomes part of the view's concrete type, so a caller closure whose return type varies (`if`/`switch` → `_ConditionalContent`) silently changes that type and re-roots the subtree, discarding row `@State`, focus and scroll position. Concrete beats generic for structural stability too.
+- Passing a value type through the view hierarchy is not the same as depending on its owner: a `struct` of display state is data, an `@Observable` view model is a dependency. "This view must not know the model" does not mean it must not know the model's value types.
 - `TextField` with `axis: .vertical` allows placeholder text that `TextEditor` lacks; when a specific minimum height is required, use something like `lineLimit(5...)`.
 - If a button action can be provided directly as an `action` parameter, do so. For example: `Button("Label", systemImage: "plus", action: myAction)` is preferred over `Button("Label", systemImage: "plus") { action() }`.
 - `tabViewStyle(.tabBarOnly)` is macOS 15+ — produces a clean tab strip below the title bar. `.sidebarAdaptable` and `.grouped` are also macOS 15+. On older deployment targets only `.automatic` and `.page` are available; flag accordingly.
