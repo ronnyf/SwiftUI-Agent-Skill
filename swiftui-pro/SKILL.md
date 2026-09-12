@@ -7,24 +7,25 @@ metadata:
   version: "1.3"
 ---
 
-Review Swift and SwiftUI code for correctness, modern API usage, and adherence to project conventions. Report only genuine problems — do not nitpick or invent issues.
+Review Swift and SwiftUI code for correctness, modern API usage, and adherence to project conventions. Report what you actually found and rank it by consequence; the reader filters, so a finding you're unsure about belongs in the report marked as such rather than dropped.
 
-## Review process
+## Review coverage
 
-1. Check deprecated and soft-deprecated API — §API below, then invoke `swiftui-specialist:swiftui-specialist` and load `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.
-1. Check view structure, modifiers, and animations — §Views below, then invoke `swiftui-specialist:swiftui-specialist` and load `references/structure.md`, `references/modifiers.md`, `references/animations.md`.
-1. Validate data flow — §Data Flow below, then invoke `swiftui-specialist:swiftui-specialist` and load `references/dataflow.md` + `references/foreach.md` for deep `@Observable`, `@Binding`, and collection-identity rules.
-1. Ensure navigation is updated and performant — §Navigation.
-1. Ensure the code meets Apple's Human Interface Guidelines — §Design.
-1. Validate accessibility compliance — §Accessibility.
-1. Ensure the code runs efficiently — §Performance.
-1. Check environment values and `@Entry` usage — invoke `swiftui-specialist:swiftui-specialist` and load `references/environment.md`.
-1. Validate localization — invoke `swiftui-specialist:swiftui-specialist` and load `references/localization.md`.
-1. Quick validation of Swift code — §Swift.
-1. Final code hygiene check — §Hygiene.
-1. **If the deployment target is iOS/macOS/watchOS/tvOS/visionOS 27 or later:** invoke `swiftui-specialist:swiftui-specialist` and load its SDK-27-migration references for `@State` macro migration, `@ContentBuilder`, and SDK 27 hard-deprecations.
+The full specification, up front. Cover what the code touches; skip what it doesn't. Order is yours. `swiftui-pro:swiftui-specialist` is the umbrella skill and carries the depth — invoke it once and read the references named below as the code calls for them.
 
-If doing a partial review, load only the relevant sections and skills.
+| Concern | Inline | Depth |
+|---|---|---|
+| Deprecated and soft-deprecated API | §API | `references/soft-deprecation.md`, `references/soft-deprecated-apis.md` |
+| View structure, modifiers, animations | §Views | `references/structure.md`, `references/modifiers.md`, `references/animations.md` |
+| Data flow — `@Observable`, `@Binding`, collection identity | §Data Flow | `references/dataflow.md`, `references/foreach.md` |
+| Navigation currency and performance | §Navigation | — |
+| Human Interface Guidelines; accessibility; efficiency | §Design, §Accessibility, §Performance | — |
+| Environment values and `@Entry` | — | `references/environment.md` |
+| Localization | — | `references/localization.md` |
+| Swift idiom; code hygiene | §Swift, §Hygiene | — |
+| Deployment target 27+ only | — | the specialist's SDK-27 references: `@State` macro migration, `@ContentBuilder`, SDK 27 hard-deprecations |
+
+A partial review covers only the rows the diff touches.
 
 
 ## Core Instructions
@@ -200,13 +201,7 @@ If doing a partial review, load only the relevant sections and skills.
 
 ## Output Format
 
-Organize findings by file. For each issue:
-
-1. State the file and relevant line(s).
-2. Name the rule being violated.
-3. Show a brief before/after code fix.
-
-Skip files with no issues. End with a prioritized summary of the most impactful changes to make first.
+Group findings by file. Per finding: the line(s), the rule or idiom at stake, and a brief before/after. Say which files you read and found clean, so the reader can tell coverage from silence. Close with a severity-ordered summary:
 
 ### Summary format
 

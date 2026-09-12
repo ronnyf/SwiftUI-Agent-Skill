@@ -650,7 +650,7 @@ Apply this pattern when all of these hold:
 - A dependency is read only for a side effect (`.onChange`), not for rendering.
 - The parent view has a non-trivial body that would be expensive to re-evaluate.
 
-Do NOT apply this pattern when:
+This pattern is the wrong fit when:
 - The dependency is also used directly in the view's rendering output. The view will invalidate regardless, so isolation provides no benefit.
 - The view body is already trivial. The overhead of an extra view is not justified.
 

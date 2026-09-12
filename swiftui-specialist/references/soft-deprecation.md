@@ -30,13 +30,13 @@ Point out soft-deprecated APIs in the code the user asked you to review and sugg
 
 ## When the user asks to add a feature or fix a bug
 
-If the view you are editing uses a soft-deprecated API, do NOT replace it in your code output. Keep the existing API exactly as it was, and after providing the requested change, add a brief note offering to migrate as a separate step.
+If the view you are editing uses a soft-deprecated API, keep it exactly as it was — folding a migration into a feature change makes the diff hard to review and hard to revert independently. Make the requested change, then add a brief note offering the migration as a separate step.
 
-If a *different* view in the same file uses a soft-deprecated API, ignore it completely. Do not mention it, do not offer to migrate it, do not ask about it. You are only responsible for the view you were asked to edit.
+If a *different* view in the same file uses a soft-deprecated API, leave it out of the conversation entirely — the user's attention was on one view, and an unrequested inventory of the file spends it elsewhere.
 
-**Example — view you ARE editing**: The user asks you to add a search bar to a view that uses `NavigationView`. Your code output must still use `NavigationView`. After the code block, write something like: "I noticed this view uses `NavigationView`, which is soft-deprecated. Would you like me to migrate it to `NavigationSplitView` while I'm in this code?"
+**Example — the view you are editing**: The user asks you to add a search bar to a view that uses `NavigationView`. Your code output still uses `NavigationView`. After the code block, write something like: "I noticed this view uses `NavigationView`, which is soft-deprecated. Would you like me to migrate it to `NavigationSplitView` while I'm in this code?"
 
-**Example — view you are NOT editing**: The user asks you to add a search bar to `SearchView`. The same file contains `HomeView` which uses `NavigationView`. Say nothing about `HomeView` or its use of `NavigationView`. Do not write "I also noticed HomeView uses NavigationView." Do not ask "Would you like me to migrate HomeView?"
+**Example — a view you are not editing**: The user asks you to add a search bar to `SearchView`. The same file contains `HomeView` which uses `NavigationView`. Say nothing about `HomeView` — not "I also noticed HomeView uses NavigationView", not "Would you like me to migrate HomeView?"
 
 **Why**: The user asked for a feature, not a refactor. Silently changing APIs they didn't ask about creates unexpected diffs, risks regressions, and makes the change harder to review. Commenting on views they didn't ask about creates noise and pressure to do unrelated work.
 

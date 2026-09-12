@@ -484,7 +484,7 @@ struct ShoppingCart: View {
 
 ## Rapidly Updating Environment Values
 
-Every update to an environment key incurs a cost for EVERY VIEW that reads ANY KEY, even ones that aren't being updated, from the environment in the affected subtree, as SwiftUI must check whether each view's value has changed. Avoid placing values that change at high frequency (scroll offset, window size, drag position) into the environment.
+Updating one environment key costs something for *every* view in the affected subtree that reads *any* key — not just the one that changed — because SwiftUI has to check each reader's value for a change. That makes the environment a poor home for values that change at high frequency (scroll offset, window size, drag position).
 
 Common high-frequency sources to watch for when reviewing client code — if any of these flow into an `@Entry` value or `.environment(\.key, value)` modifier, treat it as this anti-pattern:
 
