@@ -4,7 +4,7 @@ description: "Comprehensive SwiftUI umbrella skill — idiomatic patterns, moder
 license: MIT
 metadata:
   authors: "Apple; Paul Hudson"
-  version: "2.4.6"
+  version: "3.0.0"
 ---
 
 Apple authored the idiomatic-pattern guidance here and in `references/dataflow.md`, `structure.md`, `foreach.md`, `environment.md`, `localization.md`, `animations.md`, `modifiers.md`, and the soft-deprecation references. It is more current than general SwiftUI knowledge, so where the two disagree, this wins. This skill covers the whole SwiftUI surface: the inline §-sections are the essentials, `references/` carries the depth — read the reference for whatever the code actually touches rather than reaching for a second SwiftUI skill. Several idioms here (`@Binding` over callback closures, separate `View` types over computed properties, per-property `@Observable` tracking) do not fall out of general knowledge.

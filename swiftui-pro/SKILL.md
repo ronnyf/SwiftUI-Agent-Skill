@@ -4,8 +4,11 @@ description: Comprehensively reviews SwiftUI code for best practices on modern A
 license: MIT
 metadata:
   author: Paul Hudson
-  version: "1.4"
+  version: "1.5"
+  registered: false
 ---
+
+**Not a registered skill as of 3.0.0.** `.claude-plugin/plugin.json` declares only `./swiftui-specialist`, so this file is never loaded and `swiftui-pro:swiftui-pro` does not resolve. It shared ten `##` sections with the specialist, which owns all of them now. Kept for provenance — Paul Hudson's original review skill, and the source of the `references/` symlink targets. Re-registering it reintroduces two overlapping SwiftUI skills.
 
 Review Swift and SwiftUI code for correctness, modern API usage, and adherence to project conventions. Report what you actually found and rank it by consequence; the reader filters, so a finding you're unsure about belongs in the report marked as such rather than dropped.
 
@@ -58,7 +61,7 @@ A partial review covers only the rows the diff touches.
 - Compose styled `Text` with the `+` operator or interpolation — `Text("Hello \(Text("World").bold())!")` — both preserve per-run styling.
 - If `ObservableObject` is required (e.g. Combine debouncer), ensure `import Combine` is present — SwiftUI no longer re-exports it.
 
-*For soft-deprecated patterns, invoke `swiftui-specialist:swiftui-specialist` and load `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.*
+*For soft-deprecated patterns, invoke `swiftui-pro:swiftui-specialist` and load `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.*
 
 
 ## §Views
@@ -79,7 +82,7 @@ A partial review covers only the rows the diff touches.
 - Prefer `@Animatable` macro over manual `animatableData`.
 - When rendering to images, prefer `ImageRenderer` over `UIGraphicsImageRenderer`.
 
-*For view factoring, invalidation boundaries, init costs, and single-child `Group` anti-pattern, invoke `swiftui-specialist:swiftui-specialist` and load `references/structure.md`.*
+*For view factoring, invalidation boundaries, init costs, and single-child `Group` anti-pattern, invoke `swiftui-pro:swiftui-specialist` and load `references/structure.md`.*
 *For `ForEach` / `List` / `Table` identity and collection performance, load `references/foreach.md`.*
 
 
@@ -97,7 +100,7 @@ A partial review covers only the rows the diff touches.
 - Never use `@AppStorage` inside an `@Observable` class — it will not trigger view updates.
 - macOS: use `@Environment(\.dismissWindow)` (macOS 14+) over `NSApp.keyWindow?.close()`.
 
-*For deep `@Observable` per-property tracking, collection granularity, `@Binding` KeyPath patterns, and `onChange` isolation, invoke `swiftui-specialist:swiftui-specialist` and load `references/dataflow.md`.*
+*For deep `@Observable` per-property tracking, collection granularity, `@Binding` KeyPath patterns, and `onChange` isolation, invoke `swiftui-pro:swiftui-specialist` and load `references/dataflow.md`.*
 
 
 ## §Navigation
