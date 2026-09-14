@@ -3,14 +3,14 @@
   "owner": { "name": "Paul Hudson" },
   "metadata": {
     "description": "Agent skills for SwiftUI development on Apple platforms",
-    "version": "3.0.0"
+    "version": "3.1.0"
   },
   "plugins": [
     {
       "name": "swiftui-pro",
       "source": "./",
       "description": "SwiftUI umbrella skill — idiomatic patterns, modern API, data flow, view structure, performance, accessibility, localization, and SDK 27 migration. One registered skill: swiftui-specialist.",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "author": { "name": "Paul Hudson" },
       "homepage": "https://github.com/twostraws/SwiftUI-Agent-Skill",
       "repository": "https://github.com/ronnyf/SwiftUI-Agent-Skill",

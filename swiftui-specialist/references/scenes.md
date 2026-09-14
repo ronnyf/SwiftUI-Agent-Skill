@@ -30,7 +30,7 @@ Branch-free — one subtree, `opacity` for visibility PLUS `.allowsHitTesting` +
 
 ## Async scoping: `.task` is primary; carve-out for work that outlives the view
 
-`.task` cancellation is the **primary** tool for view-scoped async service lifetime — SwiftUI cancels the task automatically when the view leaves the graph. Use it for anything whose lifetime should match the view.
+`.task` cancellation is the **primary** tool for view-scoped async service lifetime — SwiftUI cancels the task automatically when the view leaves the graph. Use it for anything whose lifetime should match the view. The view-side shape — the producer behind a service the view holds as an optional `@State private var` — is skill §Architecture 3.
 
 **Carve-out — work that must *outlive* the view** (in-flight uploads, audio sessions, background location / health):
 

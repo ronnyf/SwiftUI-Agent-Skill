@@ -115,6 +115,8 @@ Mark `@Observable` classes with `@MainActor` unless the project has Main Actor d
 
 `@Observable` is not supported on `actor` types.
 
+*When a view should reach for a model at all, and the ownership shape it uses: skill §Architecture 2.*
+
 ```swift
 // AVOID: @Observable class without @MainActor. Properties are reachable
 // from any thread, but views read them on the main actor — background

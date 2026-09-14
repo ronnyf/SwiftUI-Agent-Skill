@@ -1,6 +1,6 @@
 {
   "name": "swiftui-pro",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "SwiftUI umbrella skill — idiomatic patterns, modern API, data flow, view structure, performance, accessibility, localization, and SDK 27 migration. One registered skill: swiftui-specialist.",
   "author": { "name": "Apple; Paul Hudson" },
   "homepage": "https://github.com/twostraws/SwiftUI-Agent-Skill",

@@ -23,6 +23,7 @@ The full specification, up front. Cover what the code touches; skip what it does
 | Availability floor of every primitive you reach for, and its gate | §Primitive-First | `references/availability-gating.md` |
 | View identity — what a rebuild silently discards | §Structural Identity | `references/scenes.md`, `references/modifiers.md`, `references/performance.md` |
 | Deprecated and soft-deprecated API | §API | `references/soft-deprecation.md`, `references/soft-deprecated-apis.md` |
+| Where structure, state and async work belong in a feature | §Architecture | `references/structure.md`, `references/dataflow.md`, `references/scenes.md` |
 | View structure, modifiers, animations | §Views | `references/structure.md`, `references/modifiers.md`, `references/animations.md` |
 | Data flow, observation, collection identity | §Data Flow | `references/dataflow.md`, `references/foreach.md` |
 | Navigation; scene / presentation / window state lifetime | §Navigation, §Scenes & Windows | `references/scenes.md` |
@@ -96,13 +97,21 @@ Depth: `references/scenes.md` (lifetime, re-rooting, the measured scroll consequ
 
 *Soft-deprecated patterns: `references/soft-deprecation.md` + `references/soft-deprecated-apis.md`.*
 
+## §Architecture — the default shape of a feature
+
+Views are cheap; declining to make one is what costs. §Views, §Data Flow and §Scenes carry the tactics — this is the shape they add up to: structure in types, state in a model, async scoped to the view that needs it.
+
+1. **Structure lives in types, not functions.** Specialized and generic `View` and `ViewModifier` types over `@ViewBuilder` methods or computed properties returning `some View`. A function returning `some View` shares the parent's invalidation boundary and can own nothing; a type owns its `@State`, its lifecycle, its `#Preview`, and is reusable and previewable on its own. Generic over its content or its data where that collapses a near-duplicate; a `ViewModifier` where the repetition is decoration rather than content.
+2. **State with invariants projects into a ViewModel** — an `@Observable @MainActor` class the view owns as `@State private var`. The threshold is not line count but the first invariant *between* two pieces of state: that is where consistency has to be maintained somewhere, and a `body` is not that place. The model is then testable without rendering anything.
+3. **The view owns its async production, scoped to its own lifetime.** `.task` / `.task(id:)`, never a stored `Task` cancelled by hand. Where the work is more than a call — fetching, generating, computing, retrying, caching — put it behind a service type the view holds as an optional `@State private var` and drive it from the `.task`. Optional because it is created when the view appears rather than when the struct is initialized: SwiftUI re-creates view structs freely, so anything built in `init` is built repeatedly. That same optionality is the seam a test uses to substitute a stub, run the async production, and assert what propagated into the ViewModel.
+
 ## §Views
 
-- Separate `View` structs, not computed properties or `@ViewBuilder` methods returning `some View` — computed properties share the parent's invalidation boundary; dedicated structs own their `@State`, lifecycle, `#Preview`.
+- Separate `View` structs, not computed properties or `@ViewBuilder` methods returning `some View` — computed properties share the parent's invalidation boundary; dedicated structs own their `@State`, lifecycle, `#Preview`. Generic `View` / `ViewModifier` types and the reasoning: §Architecture 1.
 - Flag excessively long `body` — extract subviews. Extract Button actions into methods; no business logic inline in `task()`, `onAppear()`, or elsewhere in `body`.
 - `Button` hit-tests only its **rendered content** — `.padding()` / `.frame(maxWidth: .infinity)` around a short label are transparent dead zones, so clicks land on the glyphs and nowhere else. Put `.contentShape(.rect)` **inside** the Button's label, *after* frame+padding; outside the Button it decorates the wrapper and does nothing for hit-testing.
 - Never `.onTapGesture` on a `Button`'s label — it competes with the Button and swallows the click it should receive; a Button needs no gesture help. `.focusable(false)` likewise suppresses interaction. Double-click: `.simultaneousGesture(TapGesture(count: 2))`, which doesn't consume the primary click.
-- Async work tied to a view's lifetime: `.task` / `.task(id:)` — SwiftUI cancels automatically when the view leaves the view graph; never store a `Task` property and cancel by hand.
+- Async work tied to a view's lifetime: `.task` / `.task(id:)` — SwiftUI cancels automatically when the view leaves the view graph; never store a `Task` property and cancel by hand. Owning the producer behind a service the view holds: §Architecture 3.
 - `.task { }` on a conditional branch is cancelled when `@Observable` state changes swap branches. Attach lifecycle tasks to the always-present outer container; key re-firing with `.task(id:)` on `@State`.
 - `TextField` with `axis: .vertical` over `TextEditor`, unless full-screen editing is required. `#Preview`, not the legacy `PreviewProvider` protocol. Rendering to images: `ImageRenderer`, not `UIGraphicsImageRenderer`.
 - `TabView(selection:)`: bind an enum, not an integer or string. `Tab(_:systemImage:value:content:)` requires a non-optional `selection` binding (iOS 18+ / macOS 15+).
@@ -112,7 +121,7 @@ Depth: `references/scenes.md` (lifetime, re-rooting, the measured scroll consequ
 
 ## §Data Flow
 
-- Keep body code and logic separate — extract logic into `@Observable` classes. `@Observable` classes must be marked `@MainActor` unless the project has Main Actor default actor isolation.
+- Keep body code and logic separate — extract logic into `@Observable` classes. `@Observable` classes must be marked `@MainActor` unless the project has Main Actor default actor isolation. When a view should reach for a model at all, and how it owns one: §Architecture 2.
 - `@Observable` + `@State` (ownership) + `@Bindable` / `@Environment` (passing). Avoid `ObservableObject`, `@Published`, `@StateObject`, `@ObservedObject`, `@EnvironmentObject` unless unavoidable.
 - "Stale value / didn't update" bugs are almost always state-consistency problems — an `@State` mirror drifted from source of truth. Fix by removing the desyncable mirror, not by swapping `.task(id:)` and `.onChange`.
 - `@State` is `private`, owned by the view that created it. Never `@AppStorage` inside an `@Observable` class — it will not trigger view updates.
